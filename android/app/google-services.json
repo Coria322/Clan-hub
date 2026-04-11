@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "725448138073",
+    "project_id": "clan-hub-f48f6",
+    "storage_bucket": "clan-hub-f48f6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:725448138073:android:c28d92b58d4c76cfe38048",
+        "android_client_info": {
+          "package_name": "com.example.clanhub"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "725448138073-d9ehmpedifosok09qmkdo2fj3pfht3u3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBlGjc3qTIyYHk4xu5Abzu2QG1ZwZNcKrs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "725448138073-d9ehmpedifosok09qmkdo2fj3pfht3u3.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "725448138073-gii47ipcf5m13p99pvol67ifmr8hjv3g.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.clanhub"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

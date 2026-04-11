@@ -37,7 +37,9 @@ service cloud.firestore {
       
       // MEMBERS SUBCOLLECTION
       match /members/{memberId} {
-        allow read: if isHouseholdMember(householdId);
+        // Miembros pueden leer la lista. El propio usuario puede leer su doc
+        // para verificar si fue expulsado (splash screen).
+        allow read: if isHouseholdMember(householdId) || isOwner(memberId);
         
         // Joining a household (create)
         // Allow if authenticated, and household has less than 6 members

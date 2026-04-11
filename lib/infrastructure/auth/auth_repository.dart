@@ -37,6 +37,11 @@ class AuthRepository {
   User? get currentUser => _auth.currentUser;
 
   Future<void> _createUserProfile(User user, String displayName) async {
+    // Actualizar el perfil de Firebase Auth con el displayName (para que currentUser.displayName siempre esté disponible)
+    if (user.displayName == null || user.displayName!.isEmpty) {
+      await user.updateDisplayName(displayName);
+    }
+
     final userDoc = _firestore.collection('users').doc(user.uid);
     final docSnapshot = await userDoc.get();
 
@@ -48,6 +53,12 @@ class AuthRepository {
         'photoUrl': user.photoURL,
         'createdAt': FieldValue.serverTimestamp(),
       });
+    } else {
+      // Si el doc existe pero no tiene displayName, actualizarlo
+      final data = docSnapshot.data() ?? {};
+      if (data['displayName'] == null || (data['displayName'] as String).isEmpty) {
+        await userDoc.update({'displayName': displayName});
+      }
     }
   }
 

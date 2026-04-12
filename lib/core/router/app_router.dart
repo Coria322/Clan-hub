@@ -11,15 +11,77 @@ import '../../presentation/onboarding/onboarding_join_screen.dart';
 import '../../presentation/settings/household_settings_screen.dart';
 import '../../presentation/settings/members_management_screen.dart';
 import '../../presentation/settings/categories_screen.dart';
+import '../../presentation/task/tasks_list_screen.dart';
+import '../../presentation/task/create_task_screen.dart';
+import '../../presentation/task/task_detail_screen.dart';
 
+// ──────────────────────────────────────────────
+// Shell de navegación: bottom nav bar del /home
+// ──────────────────────────────────────────────
+class _HomeShell extends StatelessWidget {
+  final StatefulNavigationShell navigationShell;
+
+  const _HomeShell({required this.navigationShell});
+
+  static const _tabs = [
+    NavigationDestination(
+      icon: Icon(Icons.check_circle_outline),
+      selectedIcon: Icon(Icons.check_circle),
+      label: 'Tareas',
+    ),
+    NavigationDestination(
+      icon: Icon(Icons.bar_chart_outlined),
+      selectedIcon: Icon(Icons.bar_chart),
+      label: 'Dashboard',
+    ),
+    NavigationDestination(
+      icon: Icon(Icons.settings_outlined),
+      selectedIcon: Icon(Icons.settings),
+      label: 'Ajustes',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: navigationShell,
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: navigationShell.currentIndex,
+        onDestinationSelected: (index) => navigationShell.goBranch(
+          index,
+          initialLocation: index == navigationShell.currentIndex,
+        ),
+        destinations: _tabs,
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────
+// Placeholders temporales
+// ──────────────────────────────────────────────
+class _DashboardPlaceholder extends StatelessWidget {
+  const _DashboardPlaceholder();
+  @override
+  Widget build(BuildContext context) => const Scaffold(
+        body: Center(child: Text('Dashboard Semanal — Fase 3')),
+      );
+}
+
+// ──────────────────────────────────────────────
+// Router principal
+// ──────────────────────────────────────────────
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/splash',
     routes: [
+      // ── Splash ──
       GoRoute(
         path: '/splash',
         builder: (context, state) => const SplashScreen(),
       ),
+
+      // ── Auth ──
       GoRoute(
         path: '/auth/login',
         builder: (context, state) => const LoginScreen(),
@@ -28,21 +90,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/auth/register',
         builder: (context, state) => const RegisterScreen(),
       ),
-      GoRoute(
-        path: '/home',
-        builder: (context, state) => Scaffold(
-          appBar: AppBar(
-            title: const Text('Home Dashboard'),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.settings),
-                onPressed: () => context.push('/settings'),
-              )
-            ],
-          ),
-          body: const Center(child: Text('Home Screen Placeholder (Fase 3)')),
-        ),
-      ),
+
+      // ── Onboarding ──
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingMainScreen(),
@@ -57,19 +106,69 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
-      GoRoute(
-        path: '/settings',
-        builder: (context, state) => const HouseholdSettingsScreen(),
-        routes: [
-          GoRoute(
-            path: 'members',
-            builder: (context, state) => const MembersManagementScreen(),
+
+      // ── Home shell con bottom nav ──
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            _HomeShell(navigationShell: navigationShell),
+        branches: [
+          // Tab 0 — Tareas
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/home/tasks',
+                builder: (context, state) => const TasksListScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'create',
+                    builder: (context, state) => const CreateTaskScreen(),
+                  ),
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) =>
+                        TaskDetailScreen(taskId: state.pathParameters['id']!),
+                  ),
+                ],
+              ),
+            ],
           ),
-          GoRoute(
-            path: 'categories',
-            builder: (context, state) => const CategoriesScreen(),
+
+          // Tab 1 — Dashboard
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/home/dashboard',
+                builder: (context, state) => const _DashboardPlaceholder(),
+              ),
+            ],
+          ),
+
+          // Tab 2 — Ajustes
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/home/settings',
+                builder: (context, state) => const HouseholdSettingsScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'members',
+                    builder: (context, state) => const MembersManagementScreen(),
+                  ),
+                  GoRoute(
+                    path: 'categories',
+                    builder: (context, state) => const CategoriesScreen(),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
+      ),
+
+      // Ruta /home legacy → redirige al tab de tareas
+      GoRoute(
+        path: '/home',
+        redirect: (context, state) => '/home/tasks',
       ),
     ],
   );

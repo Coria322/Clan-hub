@@ -66,28 +66,21 @@ service cloud.firestore {
     }
     
     // TASKS COLLECTION
+    // Nota: las queries (householdId + status + orderBy deadline/completedAt)
+    // requieren índices compuestos definidos en firestore.indexes.json
     match /tasks/{taskId} {
-      // Must be member of the household specified in the task doc
       allow read: if isHouseholdMember(resource.data.householdId);
-      
-      // Anyone in the household can create tasks
-      allow create: if isHouseholdMember(request.resource.data.householdId)
+      allow create: if isAuthenticated()
+                    && isHouseholdMember(request.resource.data.householdId)
                     && (request.resource.data.assignedTo == null || request.resource.data.assignedTo is string);
-      
-      // Updates based on roles
-      allow update: if isHouseholdMember(resource.data.householdId) 
+      allow update: if isHouseholdMember(resource.data.householdId)
                     && (
-                      // Admin can do anything
                       isHouseholdAdmin(resource.data.householdId) ||
-                      // Creator can edit
                       resource.data.createdBy == request.auth.uid ||
-                      // Assigned person can mark as complete
                       (resource.data.assignedTo == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'completedBy', 'completedAt', 'weekKey'])) ||
-                      // Anyone can mark unassigned task as complete
                       (resource.data.assignedTo == null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'completedBy', 'completedAt', 'weekKey']))
                     )
                     && (request.resource.data.assignedTo == null || request.resource.data.assignedTo is string);
-      
       allow delete: if isHouseholdMember(resource.data.householdId)
                     && (
                       isHouseholdAdmin(resource.data.householdId) ||

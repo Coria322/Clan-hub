@@ -198,13 +198,13 @@ class _HouseholdSettingsScreenState extends ConsumerState<HouseholdSettingsScree
               ListTile(
                 leading: const Icon(Icons.people),
                 title: const Text('Administrar Miembros'),
-                onTap: () => context.push('/settings/members'),
+                onTap: () => context.push('/home/settings/members'),
                 trailing: const Icon(Icons.chevron_right),
               ),
               ListTile(
                 leading: const Icon(Icons.label),
                 title: const Text('Categorías de Tareas'),
-                onTap: () => context.push('/settings/categories'),
+                onTap: () => context.push('/home/settings/categories'),
                 trailing: const Icon(Icons.chevron_right),
               ),
               const Divider(),

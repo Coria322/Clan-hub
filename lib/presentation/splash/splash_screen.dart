@@ -38,7 +38,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           .collection('users')
           .doc(user.uid)
           .get()
-          .timeout(const Duration(seconds: 3));
+          .timeout(const Duration(seconds: 10));
 
       if (!mounted) return;
 
@@ -92,7 +92,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
         if (validHouseholdId != null) {
           ref.read(activeHouseholdProvider.notifier).setHousehold(validHouseholdId);
-          context.go('/home');
+          context.go('/home/tasks');
           return;
         }
       }

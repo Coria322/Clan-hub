@@ -238,7 +238,7 @@ class _CategoryPicker extends ConsumerWidget {
 
         return DropdownButtonFormField<String>(
           decoration: const InputDecoration(border: OutlineInputBorder()),
-          value: selectedId,
+          initialValue: selectedId,
           hint: const Text('Seleccionar categoría'),
           items: cats.map((cat) {
             final color = Color(cat.colorValue);

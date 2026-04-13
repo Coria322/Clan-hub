@@ -21,6 +21,7 @@ class TaskModel {
   final String? description;
   final DateTime? deadline;
   final TaskPriority priority;
+  final int priorityLevel;
   final String categoryId;
   final String categoryName;
   final String? assignedTo;
@@ -38,6 +39,7 @@ class TaskModel {
     this.description,
     this.deadline,
     required this.priority,
+    required this.priorityLevel,
     required this.categoryId,
     required this.categoryName,
     this.assignedTo,
@@ -51,9 +53,12 @@ class TaskModel {
 
   static TaskPriority _parsePriority(String? s) {
     switch (s?.toLowerCase()) {
-      case 'alta': return TaskPriority.alta;
-      case 'baja': return TaskPriority.baja;
-      default: return TaskPriority.media;
+      case 'alta':
+        return TaskPriority.alta;
+      case 'baja':
+        return TaskPriority.baja;
+      default:
+        return TaskPriority.media;
     }
   }
 
@@ -66,6 +71,7 @@ class TaskModel {
       description: d['description'] as String?,
       deadline: (d['deadline'] as Timestamp?)?.toDate(),
       priority: _parsePriority(d['priority'] as String?),
+      priorityLevel: d['priorityLevel'] as int? ?? 2,
       categoryId: d['categoryId'] as String? ?? '',
       categoryName: d['categoryName'] as String? ?? '',
       assignedTo: d['assignedTo'] as String?,
@@ -80,7 +86,8 @@ class TaskModel {
 
   bool get isPending => status == 'pending';
   bool get isCompleted => status == 'completed';
-  bool get isOverdue => deadline != null && deadline!.isBefore(DateTime.now()) && isPending;
+  bool get isOverdue =>
+      deadline != null && deadline!.isBefore(DateTime.now()) && isPending;
 }
 
 class TaskRepository {
@@ -98,7 +105,8 @@ class TaskRepository {
     // Número de semana ISO 8601
     final jan4 = DateTime.utc(monday.year, 1, 4);
     final startOfWeek1 = jan4.subtract(Duration(days: jan4.weekday - 1));
-    final weekNumber = ((monday.difference(startOfWeek1).inDays) / 7).floor() + 1;
+    final weekNumber =
+        ((monday.difference(startOfWeek1).inDays) / 7).floor() + 1;
     final year = monday.year;
     return '$year-${weekNumber.toString().padLeft(2, '0')}';
   }
@@ -109,6 +117,7 @@ class TaskRepository {
         .collection('tasks')
         .where('householdId', isEqualTo: householdId)
         .where('status', isEqualTo: 'pending')
+        .orderBy('priorityLevel', descending: false)
         .orderBy('deadline', descending: false)
         .snapshots()
         .map((snap) => snap.docs.map(TaskModel.fromFirestore).toList());
@@ -144,6 +153,7 @@ class TaskRepository {
         'description': description,
         'deadline': deadline != null ? Timestamp.fromDate(deadline) : null,
         'priority': priority.name,
+        'priorityLevel': priority == TaskPriority.alta ? 1 : (priority == TaskPriority.media ? 2 : 3),
         'categoryId': categoryId,
         'categoryName': categoryName,
         'assignedTo': assignedTo,
@@ -229,6 +239,7 @@ class TaskRepository {
         'description': description,
         'deadline': deadline != null ? Timestamp.fromDate(deadline) : null,
         'priority': priority.name,
+        'priorityLevel': priority == TaskPriority.alta ? 1 : (priority == TaskPriority.media ? 2 : 3),
         'categoryId': categoryId,
         'categoryName': categoryName,
         'assignedTo': assignedTo,

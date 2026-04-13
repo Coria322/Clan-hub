@@ -1,9 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../application/providers/household_provider.dart';
 import '../../infrastructure/auth/auth_repository.dart';
 import '../../infrastructure/task/task_repository.dart';
+import '../../infrastructure/notifications/notification_service.dart';
 
 class TasksListScreen extends ConsumerStatefulWidget {
   const TasksListScreen({super.key});
@@ -12,9 +14,50 @@ class TasksListScreen extends ConsumerStatefulWidget {
   ConsumerState<TasksListScreen> createState() => _TasksListScreenState();
 }
 
+class _AssignedChip extends StatelessWidget {
+  final String householdId;
+  final String uid;
+  final Color backgroundColor;
+  final Color textColor;
+
+  const _AssignedChip({
+    required this.householdId,
+    required this.uid,
+    required this.backgroundColor,
+    required this.textColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('households')
+          .doc(householdId)
+          .collection('members')
+          .doc(uid)
+          .snapshots(),
+      builder: (context, snap) {
+        final name = snap.hasData && snap.data!.exists
+            ? (snap.data!.data() as Map<String, dynamic>)['displayName']
+                      as String? ??
+                  'Miembro'
+            : 'Miembro';
+
+        return _Chip(
+          label: name,
+          color: backgroundColor,
+          textColor: textColor,
+          icon: Icons.person,
+        );
+      },
+    );
+  }
+}
+
 class _TasksListScreenState extends ConsumerState<TasksListScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool _showOnlyMine = false;
 
   @override
   void initState() {
@@ -42,6 +85,18 @@ class _TasksListScreenState extends ConsumerState<TasksListScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tareas'),
+        actions: [
+          Row(
+            children: [
+              Text('Mías', style: TextStyle(fontSize: 14)),
+              Switch(
+                value: _showOnlyMine,
+                onChanged: (val) => setState(() => _showOnlyMine = val),
+              ),
+              const SizedBox(width: 8),
+            ],
+          )
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -55,18 +110,24 @@ class _TasksListScreenState extends ConsumerState<TasksListScreen>
         children: [
           // ── Tab Pendientes ──
           _TaskStreamList(
-            stream: ref.read(taskRepositoryProvider).watchPendingTasks(householdId),
+            stream: ref
+                .read(taskRepositoryProvider)
+                .watchPendingTasks(householdId),
             currentUserUid: currentUser?.uid ?? '',
             householdId: householdId,
+            showOnlyMine: _showOnlyMine,
             emptyMessage: 'No hay tareas pendientes.\n¡Crea la primera!',
             emptyIcon: Icons.check_circle_outline,
           ),
           // ── Tab Completadas ──
           _TaskStreamList(
-            stream: ref.read(taskRepositoryProvider).watchCompletedTasks(householdId),
+            stream: ref
+                .read(taskRepositoryProvider)
+                .watchCompletedTasks(householdId),
             currentUserUid: currentUser?.uid ?? '',
             householdId: householdId,
-            emptyMessage: 'Aún no hay tareas completadas esta semana. 🏠',
+            showOnlyMine: _showOnlyMine,
+            emptyMessage: 'Aún no hay tareas completadas esta semana.',
             emptyIcon: Icons.emoji_events_outlined,
           ),
         ],
@@ -84,6 +145,7 @@ class _TaskStreamList extends ConsumerWidget {
   final Stream<List<TaskModel>> stream;
   final String currentUserUid;
   final String householdId;
+  final bool showOnlyMine;
   final String emptyMessage;
   final IconData emptyIcon;
 
@@ -91,6 +153,7 @@ class _TaskStreamList extends ConsumerWidget {
     required this.stream,
     required this.currentUserUid,
     required this.householdId,
+    required this.showOnlyMine,
     required this.emptyMessage,
     required this.emptyIcon,
   });
@@ -106,7 +169,19 @@ class _TaskStreamList extends ConsumerWidget {
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         }
-        final tasks = snapshot.data ?? [];
+        final originalTasks = snapshot.data ?? [];
+
+        // Sincronizar alarmas si estamos cargando el stream de "Pendientes"
+        if (emptyIcon == Icons.check_circle_outline) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+             ref.read(notificationServiceProvider).syncTaskAlarms(originalTasks, currentUserUid);
+          });
+        }
+
+        final tasks = showOnlyMine 
+            ? originalTasks.where((t) => t.assignedTo == currentUserUid).toList() 
+            : originalTasks;
+
         if (tasks.isEmpty) {
           return _buildEmpty(context, emptyMessage, emptyIcon);
         }
@@ -128,7 +203,7 @@ class _TaskStreamList extends ConsumerWidget {
     return ListView.builder(
       padding: const EdgeInsets.all(12),
       itemCount: 3,
-      itemBuilder: (_, __) => const _SkeletonCard(),
+      itemBuilder: (_, _) => const _SkeletonCard(),
     );
   }
 
@@ -191,17 +266,23 @@ class TaskCardWidget extends ConsumerWidget {
 
   Color _priorityColor(TaskPriority p) {
     switch (p) {
-      case TaskPriority.alta: return const Color(0xFFE53935);
-      case TaskPriority.media: return const Color(0xFFFB8C00);
-      case TaskPriority.baja: return const Color(0xFF43A047);
+      case TaskPriority.alta:
+        return const Color(0xFFE53935);
+      case TaskPriority.media:
+        return const Color(0xFFFB8C00);
+      case TaskPriority.baja:
+        return const Color(0xFF43A047);
     }
   }
 
   String _priorityLabel(TaskPriority p) {
     switch (p) {
-      case TaskPriority.alta: return 'Alta';
-      case TaskPriority.media: return 'Media';
-      case TaskPriority.baja: return 'Baja';
+      case TaskPriority.alta:
+        return 'Alta';
+      case TaskPriority.media:
+        return 'Media';
+      case TaskPriority.baja:
+        return 'Baja';
     }
   }
 
@@ -234,11 +315,13 @@ class TaskCardWidget extends ConsumerWidget {
               message: task.isCompleted
                   ? 'Desmarcar como completada'
                   : _canComplete()
-                      ? 'Marcar como completada'
-                      : 'Solo el asignado puede completar',
+                  ? 'Marcar como completada'
+                  : 'Solo el asignado puede completar',
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque, // consume el tap sin competir
-                onTap: _canComplete() ? () => _toggleComplete(context, ref) : null,
+                onTap: _canComplete()
+                    ? () => _toggleComplete(context, ref)
+                    : null,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
                   child: AnimatedContainer(
@@ -254,8 +337,8 @@ class TaskCardWidget extends ConsumerWidget {
                         color: task.isCompleted
                             ? const Color(0xFF4CAF82)
                             : _canComplete()
-                                ? theme.colorScheme.primary
-                                : Colors.grey.shade400,
+                            ? theme.colorScheme.primary
+                            : Colors.grey.shade400,
                         width: 2,
                       ),
                     ),
@@ -272,7 +355,10 @@ class TaskCardWidget extends ConsumerWidget {
               child: InkWell(
                 onTap: () => context.push('/home/tasks/${task.id}'),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 10,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -316,6 +402,14 @@ class TaskCardWidget extends ConsumerWidget {
                                   : Colors.blue.shade800,
                               icon: Icons.schedule,
                             ),
+                          if (task.assignedTo != null)
+                            _AssignedChip(
+                              householdId: ref.watch(activeHouseholdProvider)!,
+                              uid: task.assignedTo!,
+                              backgroundColor:
+                                  theme.colorScheme.tertiaryContainer,
+                              textColor: theme.colorScheme.onTertiaryContainer,
+                            ),
                         ],
                       ),
 
@@ -346,7 +440,9 @@ class TaskCardWidget extends ConsumerWidget {
     final now = DateTime.now();
     final diff = d.difference(now);
     if (diff.isNegative) return 'Vencida';
-    if (diff.inDays == 0) return 'Hoy ${d.hour.toString().padLeft(2,'0')}:${d.minute.toString().padLeft(2,'0')}';
+    if (diff.inDays == 0) {
+      return 'Hoy ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+    }
     if (diff.inDays == 1) return 'Mañana';
     return '${d.day}/${d.month}/${d.year}';
   }
@@ -356,7 +452,9 @@ class TaskCardWidget extends ConsumerWidget {
     try {
       if (task.isPending) {
         await repo.completeTask(
-            taskId: task.id, completedByUid: currentUserUid);
+          taskId: task.id,
+          completedByUid: currentUserUid,
+        );
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -381,8 +479,9 @@ class TaskCardWidget extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(e.toString()),
-              duration: const Duration(seconds: 5)),
+            content: Text(e.toString()),
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     }
@@ -418,7 +517,14 @@ class _Chip extends StatelessWidget {
             Icon(icon, size: 11, color: fg),
             const SizedBox(width: 3),
           ],
-          Text(label, style: TextStyle(fontSize: 11, color: fg, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: fg,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );

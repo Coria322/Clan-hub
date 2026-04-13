@@ -6,6 +6,7 @@
       "fields": [
         { "fieldPath": "householdId", "order": "ASCENDING" },
         { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "priorityLevel", "order": "ASCENDING" },
         { "fieldPath": "deadline", "order": "ASCENDING" }
       ]
     },

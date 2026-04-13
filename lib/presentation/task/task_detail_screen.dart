@@ -51,18 +51,21 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_categoryId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selecciona una categoría')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Selecciona una categoría')));
       return;
     }
     setState(() => _loading = true);
     try {
-      await ref.read(taskRepositoryProvider).updateTask(
+      await ref
+          .read(taskRepositoryProvider)
+          .updateTask(
             taskId: widget.taskId,
             title: _titleCtrl.text.trim(),
-            description:
-                _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+            description: _descCtrl.text.trim().isEmpty
+                ? null
+                : _descCtrl.text.trim(),
             deadline: _deadline,
             priority: _priority,
             categoryId: _categoryId!,
@@ -71,15 +74,15 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
           );
       if (mounted) {
         setState(() => _editing = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Tarea actualizada')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Tarea actualizada!!')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -93,11 +96,13 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text('¿Reabrir tarea?'),
         content: const Text(
-            'La tarea volverá a estar pendiente y podrá ser completada de nuevo.'),
+          'La tarea volverá a estar pendiente y podrá ser completada de nuevo.',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Reabrir'),
@@ -111,15 +116,15 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     try {
       await ref.read(taskRepositoryProvider).reopenTask(widget.taskId);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('🔄 Tarea reabierta')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('🔄 Tarea reabierta')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -135,8 +140,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         content: const Text('Esta acción es irreversible.'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
@@ -153,9 +159,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       if (mounted) context.pop();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
         setState(() => _loading = false);
       }
     }
@@ -180,8 +186,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     setState(() {
       _deadline = time == null
           ? date
-          : DateTime(
-              date.year, date.month, date.day, time.hour, time.minute);
+          : DateTime(date.year, date.month, date.day, time.hour, time.minute);
     });
   }
 
@@ -226,13 +231,13 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       builder: (context, snap) {
         if (!snap.hasData) {
           return const Scaffold(
-              body: Center(child: CircularProgressIndicator()));
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
         if (!snap.data!.exists) {
           return Scaffold(
             appBar: AppBar(),
-            body:
-                const Center(child: Text('La tarea ya no existe.')),
+            body: const Center(child: Text('La tarea ya no existe.')),
           );
         }
 
@@ -258,23 +263,24 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
               .doc(householdId)
               .snapshots(),
           builder: (context, hSnap) {
-            final adminUid = (hSnap.data?.data()
-                    as Map<String, dynamic>?)?['adminUid'] as String?;
+            final adminUid =
+                (hSnap.data?.data() as Map<String, dynamic>?)?['adminUid']
+                    as String?;
             final isAdmin = currentUser.uid == adminUid;
             final canDelete = isAdmin || isCreator;
 
             return Scaffold(
               appBar: AppBar(
-                title:
-                    Text(_editing ? 'Editar tarea' : 'Detalle de tarea'),
+                title: Text(_editing ? 'Editar tarea' : 'Detalle de tarea'),
                 actions: [
                   if (_loading)
                     const Padding(
                       padding: EdgeInsets.all(16),
                       child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2)),
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
                     )
                   else ...[
                     // Botón editar / guardar
@@ -289,15 +295,15 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                       ),
                     if (_editing) ...[
                       TextButton(
-                        onPressed: () =>
-                            setState(() => _editing = false),
+                        onPressed: () => setState(() => _editing = false),
                         child: const Text('Cancelar'),
                       ),
                       TextButton(
                         onPressed: _save,
-                        child: const Text('Guardar',
-                            style:
-                                TextStyle(fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          'Guardar',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ],
                     // Menú de opciones
@@ -312,8 +318,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                             const PopupMenuItem(
                               value: 'reopen',
                               child: ListTile(
-                                leading:
-                                    Icon(Icons.replay, color: Colors.blue),
+                                leading: Icon(Icons.replay, color: Colors.blue),
                                 title: Text('Desmarcar / Reabrir'),
                               ),
                             ),
@@ -321,10 +326,14 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                             const PopupMenuItem(
                               value: 'delete',
                               child: ListTile(
-                                leading: Icon(Icons.delete_forever,
-                                    color: Colors.red),
-                                title: Text('Eliminar tarea',
-                                    style: TextStyle(color: Colors.red)),
+                                leading: Icon(
+                                  Icons.delete_forever,
+                                  color: Colors.red,
+                                ),
+                                title: Text(
+                                  'Eliminar tarea',
+                                  style: TextStyle(color: Colors.red),
+                                ),
                               ),
                             ),
                         ],
@@ -355,18 +364,23 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             const Spacer(),
             if (task.isOverdue)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.red.shade50,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: Colors.red.shade200),
                 ),
-                child: Text('VENCIDA',
-                    style: TextStyle(
-                        color: Colors.red.shade700,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold)),
+                child: Text(
+                  'VENCIDA',
+                  style: TextStyle(
+                    color: Colors.red.shade700,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
           ],
         ),
@@ -387,9 +401,12 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         // Descripción
         if (task.description != null && task.description!.isNotEmpty) ...[
           const SizedBox(height: 12),
-          Text(task.description!,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.7))),
+          Text(
+            task.description!,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+            ),
+          ),
         ],
 
         const SizedBox(height: 20),
@@ -397,29 +414,36 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         const SizedBox(height: 8),
 
         // Info grid
-        _InfoRow(icon: Icons.flag_outlined,
-            label: 'Prioridad',
-            value: _priorityLabel(task.priority),
-            valueColor: _priorityColor(task.priority)),
-        _InfoRow(icon: Icons.label_outline,
-            label: 'Categoría',
-            value: task.categoryName),
+        _InfoRow(
+          icon: Icons.flag_outlined,
+          label: 'Prioridad',
+          value: _priorityLabel(task.priority),
+          valueColor: _priorityColor(task.priority),
+        ),
+        _InfoRow(
+          icon: Icons.label_outline,
+          label: 'Categoría',
+          value: task.categoryName,
+        ),
         if (task.deadline != null)
           _InfoRow(
-              icon: Icons.calendar_today_outlined,
-              label: 'Fecha límite',
-              value: _formatDate(task.deadline!),
-              valueColor: task.isOverdue ? Colors.red : null),
+            icon: Icons.calendar_today_outlined,
+            label: 'Fecha límite',
+            value: _formatDate(task.deadline!),
+            valueColor: task.isOverdue ? Colors.red : null,
+          ),
         if (task.assignedTo != null)
           _AssignedRow(
-              householdId: ref.watch(activeHouseholdProvider)!,
-              uid: task.assignedTo!),
+            householdId: ref.watch(activeHouseholdProvider)!,
+            uid: task.assignedTo!,
+          ),
         if (task.isCompleted && task.completedAt != null)
           _InfoRow(
-              icon: Icons.check_circle_outline,
-              label: 'Completada',
-              value: _formatDate(task.completedAt!),
-              valueColor: const Color(0xFF4CAF82)),
+            icon: Icons.check_circle_outline,
+            label: 'Completada',
+            value: _formatDate(task.completedAt!),
+            valueColor: const Color(0xFF4CAF82),
+          ),
       ],
     );
   }
@@ -439,8 +463,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
               border: OutlineInputBorder(),
             ),
             maxLength: 100,
-            validator: (v) =>
-                (v == null || v.trim().isEmpty) ? 'El título es obligatorio' : null,
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? 'El título es obligatorio'
+                : null,
           ),
           const SizedBox(height: 12),
 
@@ -457,23 +482,28 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
           const SizedBox(height: 4),
 
           // Prioridad
-          const Text('Prioridad *',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          const Text(
+            'Prioridad *',
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
           const SizedBox(height: 8),
           SegmentedButton<TaskPriority>(
             segments: const [
               ButtonSegment(
-                  value: TaskPriority.alta,
-                  label: Text('Alta'),
-                  icon: Icon(Icons.keyboard_double_arrow_up, size: 16)),
+                value: TaskPriority.alta,
+                label: Text('Alta'),
+                icon: Icon(Icons.keyboard_double_arrow_up, size: 16),
+              ),
               ButtonSegment(
-                  value: TaskPriority.media,
-                  label: Text('Media'),
-                  icon: Icon(Icons.drag_handle, size: 16)),
+                value: TaskPriority.media,
+                label: Text('Media'),
+                icon: Icon(Icons.drag_handle, size: 16),
+              ),
               ButtonSegment(
-                  value: TaskPriority.baja,
-                  label: Text('Baja'),
-                  icon: Icon(Icons.keyboard_double_arrow_down, size: 16)),
+                value: TaskPriority.baja,
+                label: Text('Baja'),
+                icon: Icon(Icons.keyboard_double_arrow_down, size: 16),
+              ),
             ],
             selected: {_priority},
             onSelectionChanged: (s) => setState(() => _priority = s.first),
@@ -481,8 +511,10 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
           const SizedBox(height: 16),
 
           // Categoría
-          const Text('Categoría *',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          const Text(
+            'Categoría *',
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
           const SizedBox(height: 8),
           _CategoryPickerEdit(
             householdId: householdId,
@@ -495,27 +527,33 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
           const SizedBox(height: 16),
 
           // Deadline
-          const Text('Fecha límite (opcional)',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          const Text(
+            'Fecha límite (opcional)',
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
             onPressed: _pickDeadline,
             icon: const Icon(Icons.calendar_today, size: 16),
-            label: Text(_deadline == null
-                ? 'Sin fecha límite'
-                : _formatDate(_deadline!)),
+            label: Text(
+              _deadline == null ? 'Sin fecha límite' : _formatDate(_deadline!),
+            ),
           ),
           if (_deadline != null)
             TextButton(
               onPressed: () => setState(() => _deadline = null),
-              child:
-                  const Text('Quitar fecha', style: TextStyle(color: Colors.red)),
+              child: const Text(
+                'Quitar fecha',
+                style: TextStyle(color: Colors.red),
+              ),
             ),
           const SizedBox(height: 16),
 
           // Asignado a
-          const Text('Asignar a (opcional)',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          const Text(
+            'Asignar a (opcional)',
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
           const SizedBox(height: 8),
           _MemberPickerEdit(
             householdId: householdId,
@@ -553,11 +591,14 @@ class _StatusBadge extends StatelessWidget {
         children: [
           Icon(icon, size: 14, color: color),
           const SizedBox(width: 6),
-          Text(label,
-              style: TextStyle(
-                  color: color,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold)),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ],
       ),
     );
@@ -587,15 +628,19 @@ class _InfoRow extends StatelessWidget {
         children: [
           Icon(icon, size: 18, color: theme.colorScheme.primary),
           const SizedBox(width: 12),
-          Text('$label: ',
-              style: const TextStyle(
-                  fontWeight: FontWeight.w600, fontSize: 14)),
+          Text(
+            '$label: ',
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          ),
           Expanded(
-            child: Text(value,
-                style: TextStyle(
-                    fontSize: 14,
-                    color: valueColor ??
-                        theme.colorScheme.onSurface.withOpacity(0.8))),
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 14,
+                color:
+                    valueColor ?? theme.colorScheme.onSurface.withOpacity(0.8),
+              ),
+            ),
           ),
         ],
       ),
@@ -622,11 +667,14 @@ class _AssignedRow extends StatelessWidget {
       builder: (context, snap) {
         final name = snap.hasData && snap.data!.exists
             ? (snap.data!.data() as Map<String, dynamic>)['displayName']
-                    as String? ??
-                'Miembro'
+                      as String? ??
+                  'Miembro'
             : 'Miembro';
         return _InfoRow(
-            icon: Icons.person_outline, label: 'Asignada a', value: name);
+          icon: Icons.person_outline,
+          label: 'Asignada a',
+          value: name,
+        );
       },
     );
   }
@@ -656,7 +704,7 @@ class _CategoryPickerEdit extends ConsumerWidget {
         }
         return DropdownButtonFormField<String>(
           decoration: const InputDecoration(border: OutlineInputBorder()),
-          value: selectedId,
+          initialValue: selectedId,
           hint: const Text('Seleccionar categoría'),
           items: cats.map((cat) {
             final color = Color(cat.colorValue);

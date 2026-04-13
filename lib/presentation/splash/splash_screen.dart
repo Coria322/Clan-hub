@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../infrastructure/auth/auth_repository.dart';
 import '../../application/providers/household_provider.dart';
+import '../../infrastructure/notifications/notification_service.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -29,6 +30,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     if (user == null) {
       context.go('/auth/login');
       return;
+    }
+
+    try {
+      ref.read(notificationServiceProvider).requestPermissions();
+    } catch (e) {
+      debugPrint('FCM init failed: $e');
     }
 
     // En lugar de usar collectionGroup que requiere índices globales de la BD,

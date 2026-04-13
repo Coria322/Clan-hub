@@ -107,12 +107,11 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
         .doc(householdId)
         .snapshots()
         .listen((snap) {
-      if (!mounted) return;
-      final adminUid =
-          (snap.data() as Map<String, dynamic>?)?['adminUid'] as String?;
-      final isAdmin = currentUser.uid == adminUid;
-      if (_isAdmin != isAdmin) setState(() => _isAdmin = isAdmin);
-    });
+          if (!mounted) return;
+          final adminUid = (snap.data())?['adminUid'] as String?;
+          final isAdmin = currentUser.uid == adminUid;
+          if (_isAdmin != isAdmin) setState(() => _isAdmin = isAdmin);
+        });
   }
 
   @override
@@ -131,10 +130,12 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
   }) async {
     // Estado local del diálogo — fuera del árbol de widgets para evitar
     // problemas con InheritedWidget al reconstruir.
-    var selectedColor =
-        editing != null ? _colorOf(editing.colorValue) : _kColors.first;
-    var selectedIcon =
-        editing != null ? _iconOf(editing.iconCode) : _kIcons.first;
+    var selectedColor = editing != null
+        ? _colorOf(editing.colorValue)
+        : _kColors.first;
+    var selectedIcon = editing != null
+        ? _iconOf(editing.iconCode)
+        : _kIcons.first;
     final initialName = editing?.name ?? '';
 
     await showDialog(
@@ -183,8 +184,9 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.orange),
             onPressed: () => Navigator.pop(ctx, true),
@@ -200,8 +202,9 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
           .archiveCategory(householdId, cat.id);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.toString())));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
       }
     }
   }
@@ -213,14 +216,15 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
           .read(categoryRepositoryProvider)
           .restoreCategory(householdId, cat.id);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('"${cat.name}" restaurada')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('"${cat.name}" restaurada')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.toString())));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
       }
     }
   }
@@ -231,13 +235,12 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('¿Eliminar definitivamente?'),
-        content: Text(
-          '¿Seguro que quieres borrar "${cat.name}" para siempre?',
-        ),
+        content: Text('¿Seguro que quieres borrar "${cat.name}" para siempre?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
@@ -253,14 +256,19 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
           .deleteCategory(householdId, cat.id);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.toString())));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
       }
     }
   }
 
   // ── Tiles ─────────────────────────────────────────────────────────────
-  Widget _activeTile(String householdId, String currentUserUid, CategoryModel cat) {
+  Widget _activeTile(
+    String householdId,
+    String currentUserUid,
+    CategoryModel cat,
+  ) {
     final color = _colorOf(cat.colorValue);
     final icon = _iconOf(cat.iconCode);
     return Card(
@@ -270,23 +278,33 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
           backgroundColor: color.withOpacity(0.18),
           child: Icon(icon, color: color, size: 22),
         ),
-        title: Text(cat.name,
-            style: const TextStyle(fontWeight: FontWeight.w600)),
+        title: Text(
+          cat.name,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
         trailing: _isAdmin
-            ? Row(mainAxisSize: MainAxisSize.min, children: [
-                IconButton(
-                  icon: const Icon(Icons.edit_outlined),
-                  tooltip: 'Editar',
-                  onPressed: () => _showCategoryDialog(householdId,
-                      currentUserUid, editing: cat),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.archive_outlined,
-                      color: Colors.orange),
-                  tooltip: 'Archivar',
-                  onPressed: () => _archive(householdId, cat),
-                ),
-              ])
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined),
+                    tooltip: 'Editar',
+                    onPressed: () => _showCategoryDialog(
+                      householdId,
+                      currentUserUid,
+                      editing: cat,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.archive_outlined,
+                      color: Colors.orange,
+                    ),
+                    tooltip: 'Archivar',
+                    onPressed: () => _archive(householdId, cat),
+                  ),
+                ],
+              )
             : null,
       ),
     );
@@ -302,23 +320,24 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
           backgroundColor: Colors.grey.shade200,
           child: Icon(icon, color: Colors.grey.shade400, size: 22),
         ),
-        title: Text(cat.name,
-            style: TextStyle(color: Colors.grey.shade500)),
+        title: Text(cat.name, style: TextStyle(color: Colors.grey.shade500)),
         subtitle: const Text('Archivada'),
         trailing: _isAdmin
-            ? Row(mainAxisSize: MainAxisSize.min, children: [
-                IconButton(
-                  icon: const Icon(Icons.restore, color: Colors.green),
-                  tooltip: 'Restaurar',
-                  onPressed: () => _restore(householdId, cat),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete_forever,
-                      color: Colors.red),
-                  tooltip: 'Eliminar definitivamente',
-                  onPressed: () => _deletePermanent(householdId, cat),
-                ),
-              ])
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.restore, color: Colors.green),
+                    tooltip: 'Restaurar',
+                    onPressed: () => _restore(householdId, cat),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_forever, color: Colors.red),
+                    tooltip: 'Eliminar definitivamente',
+                    onPressed: () => _deletePermanent(householdId, cat),
+                  ),
+                ],
+              )
             : null,
       ),
     );
@@ -348,8 +367,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
       // FAB solo en tab 0 y solo si es admin — sin builders anidados
       floatingActionButton: (_tabs.index == 0 && _isAdmin)
           ? FloatingActionButton.extended(
-              onPressed: () =>
-                  _showCategoryDialog(householdId, currentUserUid),
+              onPressed: () => _showCategoryDialog(householdId, currentUserUid),
               icon: const Icon(Icons.add),
               label: const Text('Nueva categoría'),
             )
@@ -370,13 +388,17 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.label_off_outlined,
-                          size: 72, color: Colors.grey.shade300),
+                      Icon(
+                        Icons.label_off_outlined,
+                        size: 72,
+                        color: Colors.grey.shade300,
+                      ),
                       const SizedBox(height: 16),
-                      Text('Aún no hay categorías.\n¡Crea la primera!',
-                          textAlign: TextAlign.center,
-                          style:
-                              TextStyle(color: Colors.grey.shade500)),
+                      Text(
+                        'Aún no hay categorías.\n¡Crea la primera!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey.shade500),
+                      ),
                     ],
                   ),
                 );
@@ -403,12 +425,16 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.inventory_2_outlined,
-                          size: 72, color: Colors.grey.shade300),
+                      Icon(
+                        Icons.inventory_2_outlined,
+                        size: 72,
+                        color: Colors.grey.shade300,
+                      ),
                       const SizedBox(height: 16),
-                      Text('No hay categorías archivadas.',
-                          style:
-                              TextStyle(color: Colors.grey.shade500)),
+                      Text(
+                        'No hay categorías archivadas.',
+                        style: TextStyle(color: Colors.grey.shade500),
+                      ),
                     ],
                   ),
                 );
@@ -416,8 +442,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
               return ListView.builder(
                 padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
                 itemCount: cats.length,
-                itemBuilder: (_, i) =>
-                    _archivedTile(householdId, cats[i]),
+                itemBuilder: (_, i) => _archivedTile(householdId, cats[i]),
               );
             },
           ),
@@ -484,8 +509,9 @@ class _CategoryDialogState extends State<_CategoryDialog> {
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.toString())));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
       }
     }
   }
@@ -517,8 +543,10 @@ class _CategoryDialogState extends State<_CategoryDialog> {
             const SizedBox(height: 16),
 
             // ── Color ──
-            const Text('Color',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+            const Text(
+              'Color',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -541,9 +569,10 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                       boxShadow: selected
                           ? [
                               BoxShadow(
-                                  color: color.withOpacity(0.5),
-                                  blurRadius: 6,
-                                  spreadRadius: 1)
+                                color: color.withOpacity(0.5),
+                                blurRadius: 6,
+                                spreadRadius: 1,
+                              ),
                             ]
                           : null,
                     ),
@@ -557,8 +586,10 @@ class _CategoryDialogState extends State<_CategoryDialog> {
             const SizedBox(height: 16),
 
             // ── Icono ──
-            const Text('Ícono',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+            const Text(
+              'Ícono',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -577,9 +608,11 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                           : _selectedColor.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(icon,
-                        size: 20,
-                        color: selected ? Colors.white : _selectedColor),
+                    child: Icon(
+                      icon,
+                      size: 20,
+                      color: selected ? Colors.white : _selectedColor,
+                    ),
                   ),
                 );
               }).toList(),
@@ -598,7 +631,11 @@ class _CategoryDialogState extends State<_CategoryDialog> {
               ? const SizedBox(
                   width: 18,
                   height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
               : Text(isEditing ? 'Guardar' : 'Crear'),
         ),
       ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 import '../../presentation/splash/splash_screen.dart';
 import '../../presentation/auth/login_screen.dart';
@@ -14,6 +15,7 @@ import '../../presentation/settings/categories_screen.dart';
 import '../../presentation/task/tasks_list_screen.dart';
 import '../../presentation/task/create_task_screen.dart';
 import '../../presentation/task/task_detail_screen.dart';
+import '../../presentation/dashboard/dashboard_screen.dart';
 
 // ──────────────────────────────────────────────
 // Shell de navegación: bottom nav bar del /home
@@ -44,7 +46,12 @@ class _HomeShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: navigationShell,
+      body: Column(
+        children: [
+          const _OfflineBanner(),
+          Expanded(child: navigationShell),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: navigationShell.currentIndex,
         onDestinationSelected: (index) => navigationShell.goBranch(
@@ -57,15 +64,35 @@ class _HomeShell extends StatelessWidget {
   }
 }
 
-// ──────────────────────────────────────────────
-// Placeholders temporales
-// ──────────────────────────────────────────────
-class _DashboardPlaceholder extends StatelessWidget {
-  const _DashboardPlaceholder();
+class _OfflineBanner extends StatelessWidget {
+  const _OfflineBanner();
+
   @override
-  Widget build(BuildContext context) => const Scaffold(
-        body: Center(child: Text('Dashboard Semanal — Fase 3')),
-      );
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<ConnectivityResult>>(
+      stream: Connectivity().onConnectivityChanged,
+      builder: (context, snapshot) {
+        final results = snapshot.data ?? [ConnectivityResult.wifi];
+        final isOffline = results.isEmpty || results.contains(ConnectivityResult.none);
+        
+        if (!isOffline) return const SizedBox.shrink();
+
+        return SafeArea(
+          bottom: false,
+          child: Container(
+            color: Colors.amber.shade700,
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: const Text(
+              'Sin conexión — mostrando datos guardados',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 // ──────────────────────────────────────────────
@@ -138,7 +165,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/home/dashboard',
-                builder: (context, state) => const _DashboardPlaceholder(),
+                builder: (context, state) => const DashboardScreen(),
               ),
             ],
           ),

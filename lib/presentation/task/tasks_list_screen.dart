@@ -158,10 +158,20 @@ class _TaskStreamList extends ConsumerWidget {
     required this.emptyIcon,
   });
 
-  @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return StreamBuilder<List<TaskModel>>(
-      stream: stream,
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('households').doc(householdId).snapshots(),
+      builder: (context, hSnap) {
+        bool isAdmin = false;
+        if (hSnap.hasData && hSnap.data != null && hSnap.data!.exists) {
+          final data = hSnap.data!.data() as Map<String, dynamic>?;
+          if (data != null) {
+            isAdmin = data['adminUid'] == currentUserUid;
+          }
+        }
+            
+        return StreamBuilder<List<TaskModel>>(
+          stream: stream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return _buildSkeleton();
@@ -192,9 +202,12 @@ class _TaskStreamList extends ConsumerWidget {
             return TaskCardWidget(
               task: tasks[index],
               currentUserUid: currentUserUid,
+              isAdmin: isAdmin,
             );
           },
         );
+      },
+    );
       },
     );
   }
@@ -257,11 +270,13 @@ class _SkeletonCard extends StatelessWidget {
 class TaskCardWidget extends ConsumerWidget {
   final TaskModel task;
   final String currentUserUid;
+  final bool isAdmin;
 
   const TaskCardWidget({
     super.key,
     required this.task,
     required this.currentUserUid,
+    this.isAdmin = false,
   });
 
   Color _priorityColor(TaskPriority p) {
@@ -287,8 +302,17 @@ class TaskCardWidget extends ConsumerWidget {
   }
 
   bool _canComplete() {
-    if (task.isCompleted) return true; // cualquiera puede desmarcar
-    if (task.assignedTo == null) return true; // sin asignar: cualquiera
+    if (task.isCompleted) {
+        // Reglas para reabrir
+        if (isAdmin) return true;
+        if (task.assignedTo == null) return task.completedBy == currentUserUid;
+        // Si estaba asignada: el dueño original o el que la completó (si estaba vencida)
+        return task.assignedTo == currentUserUid || task.completedBy == currentUserUid;
+    }
+    
+    // Reglas para completar
+    if (isAdmin) return true;
+    if (task.isOverdue || task.assignedTo == null) return true;
     return task.assignedTo == currentUserUid;
   }
 

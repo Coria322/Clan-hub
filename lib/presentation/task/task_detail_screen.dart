@@ -254,7 +254,6 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         final isCreator = task.createdBy == currentUser.uid;
         final isAssigned = task.assignedTo == currentUser.uid;
         final canEdit = task.isPending && (isCreator || isAssigned);
-        final canReopen = task.isCompleted;
 
         // Admin check via household doc
         return StreamBuilder<DocumentSnapshot>(
@@ -268,6 +267,11 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                     as String?;
             final isAdmin = currentUser.uid == adminUid;
             final canDelete = isAdmin || isCreator;
+            final canReopen = task.isCompleted && (
+               isAdmin || 
+               task.completedBy == currentUser.uid ||
+               (task.assignedTo != null && task.assignedTo == currentUser.uid)
+            );
 
             return Scaffold(
               appBar: AppBar(

@@ -77,8 +77,15 @@ service cloud.firestore {
                     && (
                       isHouseholdAdmin(resource.data.householdId) ||
                       resource.data.createdBy == request.auth.uid ||
-                      (resource.data.assignedTo == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'completedBy', 'completedAt', 'weekKey'])) ||
-                      (resource.data.assignedTo == null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'completedBy', 'completedAt', 'weekKey']))
+                      (
+                         (
+                            resource.data.assignedTo == request.auth.uid || 
+                            resource.data.assignedTo == null || 
+                            resource.data.completedBy == request.auth.uid ||
+                            (resource.data.deadline != null && resource.data.deadline < request.time)
+                         ) 
+                         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'completedBy', 'completedAt', 'weekKey'])
+                      )
                     )
                     && (request.resource.data.assignedTo == null || request.resource.data.assignedTo is string);
       allow delete: if isHouseholdMember(resource.data.householdId)

@@ -208,6 +208,12 @@ class _HouseholdSettingsScreenState extends ConsumerState<HouseholdSettingsScree
                 trailing: const Icon(Icons.chevron_right),
               ),
               const Divider(),
+              ListTile(
+                leading: const Icon(Icons.swap_horiz, color: Colors.blue),
+                title: const Text('Cambiar de Hogar', style: TextStyle(color: Colors.blue)),
+                onTap: () => context.push('/household-selection'),
+              ),
+              const Divider(),
               if (isAdmin)
                 ListTile(
                   leading: const Icon(Icons.delete_forever, color: Colors.red),

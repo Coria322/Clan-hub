@@ -20,7 +20,7 @@ final activeHouseholdProvider = StateNotifierProvider<ActiveHouseholdNotifier, S
 });
 
 // Proveedor para obtener de forma asíncrona los hogares a los que pertenece el usuario autenticado
-final userHouseholdsProvider = FutureProvider<List<String>>((ref) async {
+final userHouseholdsProvider = FutureProvider<List<Map<String, String>>>((ref) async {
   final authState = ref.watch(authStateChangesProvider);
   final user = authState.value;
 

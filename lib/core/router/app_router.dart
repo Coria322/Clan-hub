@@ -12,6 +12,7 @@ import '../../presentation/onboarding/onboarding_join_screen.dart';
 import '../../presentation/settings/household_settings_screen.dart';
 import '../../presentation/settings/members_management_screen.dart';
 import '../../presentation/settings/categories_screen.dart';
+import '../../presentation/household_selection/household_selection_screen.dart';
 import '../../presentation/task/tasks_list_screen.dart';
 import '../../presentation/task/create_task_screen.dart';
 import '../../presentation/task/task_detail_screen.dart';
@@ -132,6 +133,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const OnboardingJoinScreen(),
           ),
         ],
+      ),
+
+      // ── Household Selection ──
+      GoRoute(
+        path: '/household-selection',
+        builder: (context, state) => const HouseholdSelectionScreen(),
       ),
 
       // ── Home shell con bottom nav ──

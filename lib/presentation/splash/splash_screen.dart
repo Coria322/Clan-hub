@@ -54,7 +54,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         final rawHouseholds = List<String>.from(data['households'] ?? []);
 
         // Filtramos hogares que ya no existen (ej. el admin los eliminó)
-        String? validHouseholdId;
+        final validHouseholdIds = <String>[];
         final staleIds = <String>[];
 
         for (final id in rawHouseholds) {
@@ -73,8 +73,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 .get();
 
             if (memberDoc.exists) {
-              validHouseholdId = id;
-              break;
+              validHouseholdIds.add(id);
             } else {
               // El hogar existe pero el usuario ya no es miembro
               staleIds.add(id);
@@ -97,9 +96,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
         if (!mounted) return;
 
-        if (validHouseholdId != null) {
-          ref.read(activeHouseholdProvider.notifier).setHousehold(validHouseholdId);
+        if (validHouseholdIds.length == 1) {
+          ref.read(activeHouseholdProvider.notifier).setHousehold(validHouseholdIds.first);
           context.go('/home/tasks');
+          return;
+        } else if (validHouseholdIds.length > 1) {
+          context.go('/household-selection');
           return;
         }
       }

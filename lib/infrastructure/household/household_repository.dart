@@ -201,17 +201,48 @@ class HouseholdRepository {
     }
   }
 
-  Future<List<String>> getUserHouseholds(String userUid) async {
+  Future<List<Map<String, String>>> getUserHouseholds(String userUid) async {
     try {
-      final snapshot = await _firestore
-          .collectionGroup('members')
-          .where('uid', isEqualTo: userUid)
-          .get();
+      final userDoc = await _firestore.collection('users').doc(userUid).get();
+      if (!userDoc.exists) return [];
 
-      return snapshot.docs.map((doc) {
-        // La ruta es households/{householdId}/members/{userUid}
-        return doc.reference.parent.parent!.id;
-      }).toList();
+      final data = userDoc.data() ?? {};
+      final rawHouseholds = List<String>.from(data['households'] ?? []);
+
+      final List<Map<String, String>> households = [];
+      final staleIds = <String>[];
+
+      for (final id in rawHouseholds) {
+        final hDoc = await _firestore.collection('households').doc(id).get();
+        if (hDoc.exists) {
+          final memberDoc = await _firestore
+              .collection('households')
+              .doc(id)
+              .collection('members')
+              .doc(userUid)
+              .get();
+
+          if (memberDoc.exists) {
+            households.add({
+              'id': id,
+              'name': (hDoc.data()?['name'] as String?) ?? 'Sin nombre',
+            });
+          } else {
+            staleIds.add(id);
+          }
+        } else {
+          staleIds.add(id);
+        }
+      }
+
+      if (staleIds.isNotEmpty) {
+        // Clean up orphaned households in the background
+        _firestore.collection('users').doc(userUid).set({
+          'households': FieldValue.arrayRemove(staleIds)
+        }, SetOptions(merge: true));
+      }
+
+      return households;
     } catch (e) {
       throw HouseholdException('Error al obtener los hogares: $e');
     }

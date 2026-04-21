@@ -249,7 +249,7 @@ class _CategoryPicker extends ConsumerWidget {
                 children: [
                   CircleAvatar(
                     radius: 12,
-                    backgroundColor: color.withOpacity(0.18),
+                    backgroundColor: color.withValues(alpha: 0.18),
                     child: Icon(icon, size: 14, color: color),
                   ),
                   const SizedBox(width: 10),
@@ -354,7 +354,7 @@ class _MemberAvatar extends StatelessWidget {
             height: 48,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: selected ? color : color.withOpacity(0.2),
+              color: selected ? color : color.withValues(alpha: 0.2),
               border: Border.all(
                 color: selected ? color : Colors.transparent,
                 width: 3,

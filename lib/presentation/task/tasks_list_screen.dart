@@ -80,7 +80,7 @@ class _TasksListScreenState extends ConsumerState<TasksListScreen>
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final theme = Theme.of(context);
+
 
     return Scaffold(
       appBar: AppBar(
@@ -158,6 +158,7 @@ class _TaskStreamList extends ConsumerWidget {
     required this.emptyIcon,
   });
 
+  @override
   Widget build(BuildContext context, WidgetRef ref) {
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance.collection('households').doc(householdId).snapshots(),
@@ -394,7 +395,7 @@ class TaskCardWidget extends ConsumerWidget {
                               ? TextDecoration.lineThrough
                               : null,
                           color: task.isCompleted
-                              ? theme.colorScheme.onSurface.withOpacity(0.5)
+                              ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
                               : null,
                           fontWeight: FontWeight.w600,
                         ),

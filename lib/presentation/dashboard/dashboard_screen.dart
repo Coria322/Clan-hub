@@ -100,6 +100,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       completedTasksAsync.isLoading ||
                       pendingTasksAsync.isLoading;
 
+    if (membersAsync.hasError) return Scaffold(body: Center(child: Text('Error members: ${membersAsync.error}')));
+    if (completedTasksAsync.hasError) return Scaffold(body: Center(child: SelectableText('Error completedTasks: ${completedTasksAsync.error}')));
+    if (pendingTasksAsync.hasError) return Scaffold(body: Center(child: SelectableText('Error pendingTasks: ${pendingTasksAsync.error}')));
+
     if (isLoading && !membersAsync.hasValue && !completedTasksAsync.hasValue) {
       return Scaffold(
         appBar: AppBar(title: const Text('Dashboard')),
@@ -189,7 +193,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           // Navigación temporal
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -303,10 +307,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return Expanded(
       child: Card(
         elevation: 0,
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: color.withOpacity(0.3)),
+          side: BorderSide(color: color.withValues(alpha: 0.3)),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -328,7 +332,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: color.withOpacity(0.8),
+                  color: color.withValues(alpha: 0.8),
                 ),
               ),
             ],
@@ -368,7 +372,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget _buildRankItem(CategoryWeeklyStat stat, int index) {
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: _getColorForId(stat.id, stat.isOverdueCategory).withOpacity(0.2),
+        backgroundColor: _getColorForId(stat.id, stat.isOverdueCategory).withValues(alpha: 0.2),
         foregroundColor: _getColorForId(stat.id, stat.isOverdueCategory),
         child: stat.isOverdueCategory
           ? const Icon(Icons.warning, size: 18)
@@ -386,7 +390,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: stat.isOverdueCategory 
-            ? Colors.redAccent.shade100.withOpacity(0.3)
+            ? Colors.redAccent.shade100.withValues(alpha: 0.3)
             : Theme.of(context).colorScheme.primaryContainer,
           borderRadius: BorderRadius.circular(16),
         ),
@@ -564,7 +568,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       if (value < 0 || value >= ownershipStats.length) return const SizedBox.shrink();
                       return Padding(
                         padding: const EdgeInsets.only(top: 8.0),
-                        child: Text("De:\n" + ownershipStats[value.toInt()].ownerName, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                        child: Text("De:\n${ownershipStats[value.toInt()].ownerName}", textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
                       );
                     },
                     reservedSize: 50,

@@ -48,7 +48,7 @@ const _kIcons = <IconData>[
 
 Color _colorOf(int value) {
   try {
-    return _kColors.firstWhere((c) => c.value == value);
+    return _kColors.firstWhere((c) => c.toARGB32() == value);
   } catch (_) {
     return _kColors.first;
   }
@@ -153,7 +153,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
               await repo.createCategory(
                 householdId: householdId,
                 name: name,
-                colorValue: color.value,
+                colorValue: color.toARGB32(),
                 iconCode: icon.codePoint,
                 createdBy: currentUserUid,
               );
@@ -162,7 +162,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
                 householdId: householdId,
                 docId: editing.id,
                 name: name,
-                colorValue: color.value,
+                colorValue: color.toARGB32(),
                 iconCode: icon.codePoint,
               );
             }
@@ -275,7 +275,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.18),
+          backgroundColor: color.withValues(alpha: 0.18),
           child: Icon(icon, color: color, size: 22),
         ),
         title: Text(
@@ -552,7 +552,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
               spacing: 8,
               runSpacing: 8,
               children: _kColors.map((color) {
-                final selected = _selectedColor.value == color.value;
+                final selected = _selectedColor.toARGB32() == color.toARGB32();
                 return GestureDetector(
                   onTap: () => setState(() => _selectedColor = color),
                   child: AnimatedContainer(
@@ -569,7 +569,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                       boxShadow: selected
                           ? [
                               BoxShadow(
-                                color: color.withOpacity(0.5),
+                                color: color.withValues(alpha: 0.5),
                                 blurRadius: 6,
                                 spreadRadius: 1,
                               ),
@@ -605,7 +605,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                     decoration: BoxDecoration(
                       color: selected
                           ? _selectedColor
-                          : _selectedColor.withOpacity(0.12),
+                          : _selectedColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(

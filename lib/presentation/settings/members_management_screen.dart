@@ -176,7 +176,7 @@ class _MembersManagementScreenState extends ConsumerState<MembersManagementScree
                         leading: CircleAvatar(
                           backgroundColor: isAdminRole
                               ? Colors.amber.shade200
-                              : const Color(0xFF4CAF82).withOpacity(0.2),
+                              : const Color(0xFF4CAF82).withValues(alpha: 0.2),
                           child: Text(
                             initial,
                             style: TextStyle(

@@ -88,11 +88,11 @@ class _HouseholdSettingsScreenState extends ConsumerState<HouseholdSettingsScree
       final user = ref.read(authRepositoryProvider).currentUser!;
       await ref.read(householdRepositoryProvider).deleteHousehold(householdId, user.uid);
       ref.read(activeHouseholdProvider.notifier).clear();
-      if (mounted) context.go('/onboarding');
+      if (!context.mounted) return;
+      context.go('/onboarding');
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-      }
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -118,11 +118,11 @@ class _HouseholdSettingsScreenState extends ConsumerState<HouseholdSettingsScree
       final user = ref.read(authRepositoryProvider).currentUser!;
       await ref.read(householdRepositoryProvider).leaveHousehold(householdId, user.uid);
       ref.read(activeHouseholdProvider.notifier).clear();
-      if (mounted) context.go('/onboarding');
+      if (!context.mounted) return;
+      context.go('/onboarding');
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-      }
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -234,7 +234,8 @@ class _HouseholdSettingsScreenState extends ConsumerState<HouseholdSettingsScree
                 onTap: () async {
                   await ref.read(authRepositoryProvider).signOut();
                   ref.read(activeHouseholdProvider.notifier).clear();
-                  if (mounted) context.go('/auth/login');
+                  if (!context.mounted) return;
+                  context.go('/auth/login');
                 },
               ),
             ],

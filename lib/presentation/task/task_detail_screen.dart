@@ -397,7 +397,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             fontWeight: FontWeight.bold,
             decoration: task.isCompleted ? TextDecoration.lineThrough : null,
             color: task.isCompleted
-                ? theme.colorScheme.onSurface.withOpacity(0.5)
+                ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
                 : null,
           ),
         ),
@@ -408,7 +408,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
           Text(
             task.description!,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -586,9 +586,9 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.4)),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -642,7 +642,7 @@ class _InfoRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 color:
-                    valueColor ?? theme.colorScheme.onSurface.withOpacity(0.8),
+                    valueColor ?? theme.colorScheme.onSurface.withValues(alpha: 0.8),
               ),
             ),
           ),
@@ -719,7 +719,7 @@ class _CategoryPickerEdit extends ConsumerWidget {
                 children: [
                   CircleAvatar(
                     radius: 12,
-                    backgroundColor: color.withOpacity(0.18),
+                    backgroundColor: color.withValues(alpha: 0.18),
                     child: Icon(icon, size: 14, color: color),
                   ),
                   const SizedBox(width: 10),
@@ -823,7 +823,7 @@ class _MemberAvatar extends StatelessWidget {
             height: 48,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: selected ? color : color.withOpacity(0.2),
+              color: selected ? color : color.withValues(alpha: 0.2),
               border: Border.all(
                 color: selected ? color : Colors.transparent,
                 width: 3,

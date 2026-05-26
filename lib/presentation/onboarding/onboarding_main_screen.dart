@@ -8,6 +8,7 @@ class OnboardingMainScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Bienvenido'),
@@ -30,24 +31,43 @@ class OnboardingMainScreen extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.maps_home_work_outlined, size: 80, color: Color(0xFF4CAF82)),
+            Hero(
+              tag: 'app_logo',
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.maps_home_work_outlined,
+                  size: 64,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ),
             const SizedBox(height: 32),
             Text(
               '¡Parece que aún no vives en ninguna casa en la app!',
-              style: Theme.of(context).textTheme.titleLarge,
+              style: theme.textTheme.titleLarge,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Para empezar a gestionar tus tareas, necesitas unirte a un hogar o crear el tuyo propio.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 64),
-            FilledButton.icon(
+            const SizedBox(height: 48),
+            ElevatedButton.icon(
               onPressed: () => context.push('/onboarding/create'),
               icon: const Icon(Icons.add),
               label: const Text('Crear un Hogar Nuevo'),
-              style: FilledButton.styleFrom(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.secondary,
+                foregroundColor: theme.colorScheme.onSecondary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
             ),

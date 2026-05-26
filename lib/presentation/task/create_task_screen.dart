@@ -314,7 +314,7 @@ class _MemberPicker extends StatelessWidget {
                   tooltip: name,
                   selected: selectedUid == uid,
                   onTap: () => onSelected(uid),
-                  color: const Color(0xFF4CAF82),
+                  color: Theme.of(context).colorScheme.primary,
                 );
               }),
             ],

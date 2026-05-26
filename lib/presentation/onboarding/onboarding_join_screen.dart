@@ -43,6 +43,7 @@ class _OnboardingJoinScreenState extends ConsumerState<OnboardingJoinScreen> {
       final householdId = await ref.read(householdRepositoryProvider).joinHousehold(code, user.uid, displayName);
       
       ref.read(activeHouseholdProvider.notifier).setHousehold(householdId);
+      ref.invalidate(userHouseholdsProvider);
       
       if (mounted) {
         context.go('/home');
@@ -85,7 +86,7 @@ class _OnboardingJoinScreenState extends ConsumerState<OnboardingJoinScreen> {
               ),
             ],
             const SizedBox(height: 24),
-            FilledButton(
+            ElevatedButton(
               onPressed: _isLoading ? null : _join,
               child: _isLoading 
                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))

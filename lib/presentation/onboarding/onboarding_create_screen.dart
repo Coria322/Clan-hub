@@ -44,6 +44,8 @@ class _OnboardingCreateScreenState extends ConsumerState<OnboardingCreateScreen>
       
       // Actualizamos el provider activo
       ref.read(activeHouseholdProvider.notifier).setHousehold(householdId);
+      // Invalidamos la caché de la lista de hogares para que el Switcher se actualice
+      ref.invalidate(userHouseholdsProvider);
       
       if (mounted) {
         context.go('/home'); // O a una pantalla de éxito
@@ -85,7 +87,7 @@ class _OnboardingCreateScreenState extends ConsumerState<OnboardingCreateScreen>
               ),
             ],
             const SizedBox(height: 24),
-            FilledButton(
+            ElevatedButton(
               onPressed: _isLoading ? null : _create,
               child: _isLoading 
                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))

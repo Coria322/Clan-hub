@@ -26,40 +26,119 @@ class _HomeShell extends StatelessWidget {
 
   const _HomeShell({required this.navigationShell});
 
-  static const _tabs = [
-    NavigationDestination(
-      icon: Icon(Icons.check_circle_outline),
-      selectedIcon: Icon(Icons.check_circle),
-      label: 'Tareas',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.bar_chart_outlined),
-      selectedIcon: Icon(Icons.bar_chart),
-      label: 'Dashboard',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.settings_outlined),
-      selectedIcon: Icon(Icons.settings),
-      label: 'Ajustes',
-    ),
-  ];
+  Widget _buildNavItem(BuildContext context, {
+    required int index,
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final isActive = navigationShell.currentIndex == index;
+
+    return GestureDetector(
+      onTap: () => navigationShell.goBranch(
+        index,
+        initialLocation: index == navigationShell.currentIndex,
+      ),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive
+              ? (isDark
+                  ? theme.colorScheme.primaryContainer.withValues(alpha: 0.3)
+                  : theme.colorScheme.primary.withValues(alpha: 0.08)) // Equivalent to bg-indigo-50
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isActive ? activeIcon : icon,
+              color: isActive ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+              size: 24,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 11,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                color: isActive ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                letterSpacing: -0.2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
+      extendBody: true, // Allows body to scroll behind the transparent nav bar if needed
       body: Column(
         children: [
           const _OfflineBanner(),
           Expanded(child: navigationShell),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: (index) => navigationShell.goBranch(
-          index,
-          initialLocation: index == navigationShell.currentIndex,
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24), // iOS safe area / visual thickness padding
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF151B2B) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          border: Border(
+            top: BorderSide(
+              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9), // slate-800 / slate-100
+            ),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF5C6BC0).withValues(alpha: 0.08), // shadow-[0_-4px_12px_rgba(92,107,192,0.08)]
+              blurRadius: 12,
+              offset: const Offset(0, -4),
+            ),
+          ],
         ),
-        destinations: _tabs,
+        child: SafeArea(
+          top: false,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _buildNavItem(
+                context,
+                index: 0,
+                icon: Icons.check_circle_outline,
+                activeIcon: Icons.check_circle,
+                label: 'Tareas',
+              ),
+              _buildNavItem(
+                context,
+                index: 1,
+                icon: Icons.bar_chart_outlined,
+                activeIcon: Icons.bar_chart,
+                label: 'Dashboard',
+              ),
+              _buildNavItem(
+                context,
+                index: 2,
+                icon: Icons.settings_outlined,
+                activeIcon: Icons.settings,
+                label: 'Ajustes',
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

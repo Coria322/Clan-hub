@@ -138,10 +138,11 @@ class _HouseholdSettingsScreenState extends ConsumerState<HouseholdSettingsScree
     );
 
     if (success == true && context.mounted) {
+      final theme = Theme.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('🔑 Contraseña actualizada con éxito.'),
-          backgroundColor: Color(0xFF4CAF82),
+        SnackBar(
+          content: const Text('🔑 Contraseña actualizada con éxito.'),
+          backgroundColor: theme.colorScheme.tertiary,
         ),
       );
     }
@@ -159,7 +160,10 @@ class _HouseholdSettingsScreenState extends ConsumerState<HouseholdSettingsScree
         .collection('households').doc(householdId).snapshots();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Ajustes del Hogar')),
+      appBar: AppBar(
+        title: const Text('Ajustes y Perfil', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Inter')),
+        centerTitle: false,
+      ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: householdStream,
         builder: (context, snapshot) {
@@ -179,96 +183,226 @@ class _HouseholdSettingsScreenState extends ConsumerState<HouseholdSettingsScree
           final isAdmin = user?.uid == adminUid;
 
           return ListView(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 120.0),
+            physics: const BouncingScrollPhysics(),
             children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      const Icon(Icons.home, size: 64, color: Color(0xFF4CAF82)),
-                      const SizedBox(height: 16),
-                      Text(name, style: Theme.of(context).textTheme.headlineSmall),
-                      const SizedBox(height: 8),
-                      Chip(
-                        label: Text(isAdmin ? 'Eres Administrador' : 'Eres Miembro'),
-                        backgroundColor: isAdmin ? Colors.amber.shade100 : Colors.blue.shade100,
-                      ),
+              // Header Card
+              Container(
+                padding: const EdgeInsets.all(24.0),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).colorScheme.primary,
+                      Theme.of(context).colorScheme.primaryContainer,
                     ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.home_rounded, size: 48, color: Colors.white),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      child: Text(
+                        isAdmin ? 'Eres Administrador' : 'Eres Miembro',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              _buildSectionHeader('General'),
+              _buildSettingsGroup([
+                _buildSettingsTile(
+                  icon: Icons.tag,
+                  iconColor: Colors.deepPurple,
+                  title: 'Código de Invitación',
+                  subtitle: inviteCode,
+                  trailing: IconButton(
+                    icon: const Icon(Icons.copy, color: Colors.grey, size: 20),
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: inviteCode));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Código copiado al portapapeles')),
+                      );
+                    },
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              ListTile(
-                title: const Text('Código de Invitación'),
-                subtitle: Text(
-                  inviteCode,
-                  style: const TextStyle(letterSpacing: 2, fontWeight: FontWeight.bold),
+                const Divider(height: 1, indent: 64),
+                _buildSettingsTile(
+                  icon: Icons.swap_horiz_rounded,
+                  iconColor: Colors.blue,
+                  title: 'Cambiar de Hogar',
+                  onTap: () => context.push('/household-selection'),
                 ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.copy),
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: inviteCode));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Código copiado al portapapeles')),
-                    );
+              ]),
+
+              _buildSectionHeader('Miembros y Roles'),
+              _buildSettingsGroup([
+                _buildSettingsTile(
+                  icon: Icons.people_alt_rounded,
+                  iconColor: Colors.teal,
+                  title: 'Administrar Miembros',
+                  onTap: () => context.push('/home/settings/members'),
+                ),
+                const Divider(height: 1, indent: 64),
+                _buildSettingsTile(
+                  icon: Icons.category_rounded,
+                  iconColor: Colors.orange,
+                  title: 'Categorías de Tareas',
+                  onTap: () => context.push('/home/settings/categories'),
+                ),
+              ]),
+
+              _buildSectionHeader('Cuenta y Zona de Peligro'),
+              _buildSettingsGroup([
+                _buildSettingsTile(
+                  icon: Icons.lock_outline_rounded,
+                  iconColor: Colors.indigo,
+                  title: 'Cambiar Contraseña',
+                  onTap: () => _showChangePasswordDialog(context),
+                ),
+                const Divider(height: 1, indent: 64),
+                if (isAdmin)
+                  _buildSettingsTile(
+                    icon: Icons.delete_forever_rounded,
+                    iconColor: Colors.redAccent,
+                    title: 'Eliminar Hogar',
+                    subtitle: 'Acción irreversible',
+                    isDestructive: true,
+                    onTap: () => _confirmDeleteHousehold(context, householdId),
+                  )
+                else
+                  _buildSettingsTile(
+                    icon: Icons.exit_to_app_rounded,
+                    iconColor: Colors.deepOrange,
+                    title: 'Abandonar Hogar',
+                    isDestructive: true,
+                    onTap: () => _confirmLeaveHousehold(context, householdId),
+                  ),
+                const Divider(height: 1, indent: 64),
+                _buildSettingsTile(
+                  icon: Icons.logout_rounded,
+                  iconColor: Colors.red,
+                  title: 'Cerrar Sesión',
+                  isDestructive: true,
+                  onTap: () async {
+                    await ref.read(authRepositoryProvider).signOut();
+                    ref.read(activeHouseholdProvider.notifier).clear();
+                    if (!context.mounted) return;
+                    context.go('/auth/login');
                   },
                 ),
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.people),
-                title: const Text('Administrar Miembros'),
-                onTap: () => context.push('/home/settings/members'),
-                trailing: const Icon(Icons.chevron_right),
-              ),
-              ListTile(
-                leading: const Icon(Icons.label),
-                title: const Text('Categorías de Tareas'),
-                onTap: () => context.push('/home/settings/categories'),
-                trailing: const Icon(Icons.chevron_right),
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.swap_horiz, color: Colors.blue),
-                title: const Text('Cambiar de Hogar', style: TextStyle(color: Colors.blue)),
-                onTap: () => context.push('/household-selection'),
-              ),
-              const Divider(),
-              if (isAdmin)
-                ListTile(
-                  leading: const Icon(Icons.delete_forever, color: Colors.red),
-                  title: const Text('Eliminar Hogar', style: TextStyle(color: Colors.red)),
-                  subtitle: const Text('Acción irreversible'),
-                  onTap: () => _confirmDeleteHousehold(context, householdId),
-                )
-              else
-                ListTile(
-                  leading: const Icon(Icons.exit_to_app, color: Colors.orange),
-                  title: const Text('Abandonar Hogar', style: TextStyle(color: Colors.orange)),
-                  onTap: () => _confirmLeaveHousehold(context, householdId),
-                ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.lock_outline, color: Colors.teal),
-                title: const Text('Cambiar Contraseña', style: TextStyle(color: Colors.teal)),
-                onTap: () => _showChangePasswordDialog(context),
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.logout, color: Colors.red),
-                title: const Text('Cerrar Sesión', style: TextStyle(color: Colors.red)),
-                onTap: () async {
-                  await ref.read(authRepositoryProvider).signOut();
-                  ref.read(activeHouseholdProvider.notifier).clear();
-                  if (!context.mounted) return;
-                  context.go('/auth/login');
-                },
-              ),
+              ]),
+              const SizedBox(height: 40),
             ],
           );
         },
       ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, bottom: 12, top: 32),
+      child: Text(
+        title.toUpperCase(),
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).colorScheme.primary,
+          letterSpacing: 1.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsGroup(List<Widget> children) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF4352A5).withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buildSettingsTile({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    String? subtitle,
+    Widget? trailing,
+    VoidCallback? onTap,
+    bool isDestructive = false,
+  }) {
+    return ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      leading: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: iconColor.withValues(alpha: 0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: iconColor, size: 22),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 15,
+          color: isDestructive ? Colors.redAccent.shade700 : const Color(0xFF1a1a2e),
+        ),
+      ),
+      subtitle: subtitle != null ? Text(subtitle, style: const TextStyle(fontSize: 13, color: Colors.grey)) : null,
+      trailing: trailing ?? const Icon(Icons.chevron_right_rounded, size: 22, color: Colors.grey),
     );
   }
 }

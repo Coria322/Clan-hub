@@ -101,28 +101,79 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     }
   }
 
+  Future<bool> _showConfirmationBottomSheet({
+    required String title,
+    required String description,
+    required String confirmLabel,
+    Color? confirmColor,
+  }) async {
+    final theme = Theme.of(context);
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  title,
+                  style: theme.textTheme.headlineMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  description,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: confirmColor ?? theme.colorScheme.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: Text(confirmLabel),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('Cancelar'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    return result ?? false;
+  }
+
   // ── Desmarcar como completada ─────────────────────────────────────────
   Future<void> _reopen() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('¿Reabrir tarea?'),
-        content: const Text(
-          'La tarea volverá a estar pendiente y podrá ser completada de nuevo.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Reabrir'),
-          ),
-        ],
-      ),
+    final confirmed = await _showConfirmationBottomSheet(
+      title: '¿Reabrir tarea?',
+      description: 'La tarea volverá a estar pendiente y podrá ser completada de nuevo.',
+      confirmLabel: 'Reabrir',
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
 
     setState(() => _loading = true);
     try {
@@ -145,25 +196,13 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
   // ── Eliminar ──────────────────────────────────────────────────────────
   Future<void> _delete() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('¿Eliminar tarea?'),
-        content: const Text('Esta acción es irreversible.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
+    final confirmed = await _showConfirmationBottomSheet(
+      title: '¿Eliminar tarea?',
+      description: 'Esta acción es irreversible.',
+      confirmLabel: 'Eliminar',
+      confirmColor: Theme.of(context).colorScheme.error,
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
 
     setState(() => _loading = true);
     try {
@@ -206,11 +245,11 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   Color _priorityColor(TaskPriority p) {
     switch (p) {
       case TaskPriority.alta:
-        return const Color(0xFFE53935);
+        return const Color(0xFFAC3509); // Warm Coral
       case TaskPriority.media:
-        return const Color(0xFFFB8C00);
+        return const Color(0xFF4352A5); // Soft Indigo
       case TaskPriority.baja:
-        return const Color(0xFF43A047);
+        return const Color(0xFF767683); // Slate
     }
   }
 
@@ -456,7 +495,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             icon: Icons.check_circle_outline,
             label: 'Completada',
             value: _formatDate(task.completedAt!),
-            valueColor: const Color(0xFF4CAF82),
+            valueColor: Theme.of(context).colorScheme.tertiary,
           ),
       ],
     );
@@ -588,8 +627,9 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final isCompleted = task.isCompleted;
-    final color = isCompleted ? const Color(0xFF4CAF82) : Colors.orange;
+    final color = isCompleted ? theme.colorScheme.tertiary : const Color(0xFFFB8C00);
     final label = isCompleted ? 'Completada' : 'Pendiente';
     final icon = isCompleted ? Icons.check_circle : Icons.pending_outlined;
 
@@ -788,12 +828,12 @@ class _MemberPickerEdit extends StatelessWidget {
                 final uid = data['uid'] as String? ?? doc.id;
                 final name = data['displayName'] as String? ?? 'U';
                 final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
-                return _MemberAvatar(
+                 return _MemberAvatar(
                   label: initial,
                   tooltip: name,
                   selected: selectedUid == uid,
                   onTap: () => onSelected(uid),
-                  color: const Color(0xFF4CAF82),
+                  color: Theme.of(context).colorScheme.primary,
                 );
               }),
             ],

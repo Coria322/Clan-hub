@@ -364,12 +364,17 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
           ],
         ),
       ),
-      // FAB en tab 0 para todos los miembros (cualquiera puede crear)
       floatingActionButton: (_tabs.index == 0)
-          ? FloatingActionButton.extended(
-              onPressed: () => _showCategoryDialog(householdId, currentUserUid),
-              icon: const Icon(Icons.add),
-              label: const Text('Nueva categoría'),
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 120.0),
+              child: FloatingActionButton.extended(
+                onPressed: () => _showCategoryDialog(householdId, currentUserUid),
+                elevation: 4,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Colors.white,
+                icon: const Icon(Icons.add),
+                label: const Text('Nueva Categoría', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Inter')),
+              ),
             )
           : null,
       body: TabBarView(
@@ -398,6 +403,12 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
                         'Aún no hay categorías.\n¡Crea la primera!',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.grey.shade500),
+                      ),
+                      const SizedBox(height: 24),
+                      FilledButton.icon(
+                        onPressed: () => _showCategoryDialog(householdId, currentUserUid),
+                        icon: const Icon(Icons.add),
+                        label: const Text('Crear Categoría'),
                       ),
                     ],
                   ),

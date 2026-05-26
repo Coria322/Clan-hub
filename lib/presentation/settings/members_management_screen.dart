@@ -81,31 +81,86 @@ class _MembersManagementScreenState extends ConsumerState<MembersManagementScree
     return 'Usuario';
   }
 
+  Future<bool> _showConfirmationBottomSheet({
+    required BuildContext context,
+    required String title,
+    required String description,
+    required String confirmLabel,
+    Color? confirmColor,
+  }) async {
+    final theme = Theme.of(context);
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  title,
+                  style: theme.textTheme.headlineMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  description,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: confirmColor ?? theme.colorScheme.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: Text(confirmLabel),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('Cancelar'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    return result ?? false;
+  }
+
   Future<void> _confirmRemoveMember(
     BuildContext context,
     String householdId,
     String targetUid,
     String targetName,
   ) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await _showConfirmationBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('¿Eliminar miembro?'),
-        content: Text('¿Seguro que quieres eliminar a $targetName del hogar? Esta acción no se puede deshacer.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
+      title: '¿Eliminar miembro?',
+      description: '¿Seguro que quieres eliminar a $targetName del hogar? Esta acción no se puede deshacer.',
+      confirmLabel: 'Eliminar',
+      confirmColor: Colors.red,
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
 
     try {
       await ref.read(householdRepositoryProvider).removeMember(householdId, targetUid);
@@ -176,13 +231,13 @@ class _MembersManagementScreenState extends ConsumerState<MembersManagementScree
                         leading: CircleAvatar(
                           backgroundColor: isAdminRole
                               ? Colors.amber.shade200
-                              : const Color(0xFF4CAF82).withValues(alpha: 0.2),
+                              : Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
                           child: Text(
                             initial,
                             style: TextStyle(
                               color: isAdminRole
                                   ? Colors.amber.shade800
-                                  : const Color(0xFF4CAF82),
+                                  : Theme.of(context).colorScheme.primary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),

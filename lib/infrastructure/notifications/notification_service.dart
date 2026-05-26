@@ -73,7 +73,7 @@ class NotificationService {
     final now = DateTime.now();
 
     // Alarmas requeridas
-    final offsetsMin = [24 * 60, 12 * 60, 60, -10]; 
+    final offsetsMin = [24 * 60, 12 * 60, 60, 0, -10]; 
 
     for (int i = 0; i < offsetsMin.length; i++) {
         final alertTime = deadline.subtract(Duration(minutes: offsetsMin[i]));
@@ -89,6 +89,9 @@ class NotificationService {
             if (offsetsMin[i] == -10) {
               title = '¡Tarea Vencida! 🚨';
               body = 'La tarea "${task.title}" venció hace 10 minutos. ¡Aún puedes salvarla!';
+            } else if (offsetsMin[i] == 0) {
+              title = '¡Tiempo agotado! ⏰';
+              body = 'La tarea "${task.title}" ha vencido en este momento.';
             } else {
               final String label = offsetsMin[i] == 60 ? "1 hora" : "${offsetsMin[i] ~/ 60} horas";
               title = '¡A $label de vencer! ⏳';

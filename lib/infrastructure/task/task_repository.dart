@@ -147,7 +147,8 @@ class TaskRepository {
     required String createdBy,
   }) async {
     try {
-      await _firestore.collection('tasks').add({
+      // No hacemos await para que funcione instantáneamente offline
+      _firestore.collection('tasks').add({
         'householdId': householdId,
         'title': title,
         'description': description,
@@ -164,6 +165,9 @@ class TaskRepository {
         'completedAt': null,
         'weekKey': null,
         'deadlineNotificationSent': false,
+      }).catchError((e) {
+        // Ignoramos el error en consola o lo registramos, 
+        // ya que la persistencia se encarga de reintentar.
       });
     } catch (e) {
       throw TaskException('Error al crear la tarea: $e');
@@ -177,23 +181,17 @@ class TaskRepository {
   }) async {
     final taskRef = _firestore.collection('tasks').doc(taskId);
     try {
-      await _firestore.runTransaction((tx) async {
-        final snap = await tx.get(taskRef);
-        if (!snap.exists) throw TaskException('La tarea no existe.');
-        final data = snap.data()!;
-        if (data['status'] == 'completed') {
-          throw TaskException('Esta tarea ya fue completada.');
-        }
-        final weekKey = calculateWeekKey(DateTime.now());
-        tx.update(taskRef, {
-          'status': 'completed',
-          'completedBy': completedByUid,
-          'completedAt': FieldValue.serverTimestamp(),
-          'weekKey': weekKey,
-        });
+      final weekKey = calculateWeekKey(DateTime.now());
+      // No usamos runTransaction porque falla inmediatamente offline.
+      // Un update simple se encola y funciona offline.
+      taskRef.update({
+        'status': 'completed',
+        'completedBy': completedByUid,
+        'completedAt': FieldValue.serverTimestamp(),
+        'weekKey': weekKey,
+      }).catchError((e) {
+        // Error de sincronización futura
       });
-    } on TaskException {
-      rethrow;
     } catch (e) {
       throw TaskException('Error al completar la tarea: $e');
     }
@@ -202,12 +200,12 @@ class TaskRepository {
   // ── Reabrir tarea (deshacer completado) ──
   Future<void> reopenTask(String taskId) async {
     try {
-      await _firestore.collection('tasks').doc(taskId).update({
+      _firestore.collection('tasks').doc(taskId).update({
         'status': 'pending',
         'completedBy': null,
         'completedAt': null,
         'weekKey': null,
-      });
+      }).catchError((e) {});
     } catch (e) {
       throw TaskException('Error al reabrir la tarea: $e');
     }
@@ -216,7 +214,7 @@ class TaskRepository {
   // ── Eliminar tarea (TASK-012) ──
   Future<void> deleteTask(String taskId) async {
     try {
-      await _firestore.collection('tasks').doc(taskId).delete();
+      _firestore.collection('tasks').doc(taskId).delete().catchError((e) {});
     } catch (e) {
       throw TaskException('Error al eliminar la tarea: $e');
     }
@@ -234,7 +232,7 @@ class TaskRepository {
     String? assignedTo,
   }) async {
     try {
-      await _firestore.collection('tasks').doc(taskId).update({
+      _firestore.collection('tasks').doc(taskId).update({
         'title': title,
         'description': description,
         'deadline': deadline != null ? Timestamp.fromDate(deadline) : null,
@@ -243,7 +241,7 @@ class TaskRepository {
         'categoryId': categoryId,
         'categoryName': categoryName,
         'assignedTo': assignedTo,
-      });
+      }).catchError((e) {});
     } catch (e) {
       throw TaskException('Error al actualizar la tarea: $e');
     }

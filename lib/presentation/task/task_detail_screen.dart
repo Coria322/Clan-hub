@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -29,9 +30,20 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   bool _editing = false;
   bool _loading = false;
   TaskModel? _task;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Refresco pasivo de UI para la fecha de vencimiento cada 30 seg
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() {});
+    });
+  }
 
   @override
   void dispose() {
+    _timer?.cancel();
     _titleCtrl.dispose();
     _descCtrl.dispose();
     super.dispose();
@@ -252,8 +264,6 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         }
 
         final isCreator = task.createdBy == currentUser.uid;
-        final isAssigned = task.assignedTo == currentUser.uid;
-        final canEdit = task.isPending && (isCreator || isAssigned);
 
         // Admin check via household doc
         return StreamBuilder<DocumentSnapshot>(
@@ -266,11 +276,11 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 (hSnap.data?.data() as Map<String, dynamic>?)?['adminUid']
                     as String?;
             final isAdmin = currentUser.uid == adminUid;
+            final canEdit = task.isPending && (isCreator || isAdmin);
             final canDelete = isAdmin || isCreator;
             final canReopen = task.isCompleted && (
                isAdmin || 
-               task.completedBy == currentUser.uid ||
-               (task.assignedTo != null && task.assignedTo == currentUser.uid)
+               task.completedBy == currentUser.uid
             );
 
             return Scaffold(

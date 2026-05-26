@@ -59,17 +59,38 @@ class DashboardRepository {
   }
 
   Future<Map<String, String>> getHouseholdMemberNames(String householdId) async {
-    final membersSnapshot = await _firestore
-        .collection('households')
-        .doc(householdId)
-        .collection('members')
-        .get();
-        
-    final memberNames = <String, String>{};
-    for (var doc in membersSnapshot.docs) {
-      final data = doc.data();
-      memberNames[doc.id] = data['displayName'] as String? ?? 'Miembro';
+    try {
+      final membersSnapshot = await _firestore
+          .collection('households')
+          .doc(householdId)
+          .collection('members')
+          .get()
+          .timeout(const Duration(seconds: 2));
+          
+      final memberNames = <String, String>{};
+      for (var doc in membersSnapshot.docs) {
+        final data = doc.data();
+        memberNames[doc.id] = data['displayName'] as String? ?? 'Miembro';
+      }
+      return memberNames;
+    } catch (e) {
+      // Fallback a caché local si estamos offline (timeout o error de red)
+      try {
+        final cachedSnapshot = await _firestore
+            .collection('households')
+            .doc(householdId)
+            .collection('members')
+            .get(const GetOptions(source: Source.cache));
+            
+        final memberNames = <String, String>{};
+        for (var doc in cachedSnapshot.docs) {
+          final data = doc.data();
+          memberNames[doc.id] = data['displayName'] as String? ?? 'Miembro';
+        }
+        return memberNames;
+      } catch (_) {
+        return {};
+      }
     }
-    return memberNames;
   }
 }

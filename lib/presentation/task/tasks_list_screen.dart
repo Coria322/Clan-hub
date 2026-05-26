@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,8 @@ import '../../application/providers/household_provider.dart';
 import '../../infrastructure/auth/auth_repository.dart';
 import '../../infrastructure/task/task_repository.dart';
 import '../../infrastructure/notifications/notification_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:share_plus/share_plus.dart';
 
 class TasksListScreen extends ConsumerStatefulWidget {
   const TasksListScreen({super.key});
@@ -58,15 +61,20 @@ class _TasksListScreenState extends ConsumerState<TasksListScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _showOnlyMine = false;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
   void dispose() {
+    _timer?.cancel();
     _tabController.dispose();
     super.dispose();
   }
@@ -304,11 +312,9 @@ class TaskCardWidget extends ConsumerWidget {
 
   bool _canComplete() {
     if (task.isCompleted) {
-        // Reglas para reabrir
+        // Reglas para reabrir: Solo admin y el usuario que la completó
         if (isAdmin) return true;
-        if (task.assignedTo == null) return task.completedBy == currentUserUid;
-        // Si estaba asignada: el dueño original o el que la completó (si estaba vencida)
-        return task.assignedTo == currentUserUid || task.completedBy == currentUserUid;
+        return task.completedBy == currentUserUid;
     }
     
     // Reglas para completar
@@ -476,10 +482,51 @@ class TaskCardWidget extends ConsumerWidget {
     final repo = ref.read(taskRepositoryProvider);
     try {
       if (task.isPending) {
+        
+        // --- INICIO DIÁLOGO FOTOGRÁFICO ---
+        final action = await showDialog<String>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('¡Felicidades!'),
+            content: const Text('¿Deseas enviar evidencia fotográfica de tu logro al Clan?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, 'solo_completar'),
+                child: const Text('Solo Completar'),
+              ),
+              FilledButton.icon(
+                onPressed: () => Navigator.pop(ctx, 'tomar_foto'),
+                icon: const Icon(Icons.camera_alt, size: 18),
+                label: const Text('Tomar Foto'),
+              ),
+            ],
+          ),
+        );
+        
+        if (action == null) return; // Canceló tapando afuera del diálogo
+        final takePhoto = (action == 'tomar_foto');
+        
+        XFile? photo;
+        if (takePhoto) {
+           final picker = ImagePicker();
+           photo = await picker.pickImage(source: ImageSource.camera, imageQuality: 70);
+           // Si el usuario abrió la cámara pero no tomó foto (se arrepintió y regresó)
+           // cortamos aquí para no autocompletarle la tarea accidentalmente.
+           if (photo == null) return; 
+        }
+        
+        // Si hay foto, compartimos nativamente ANTES de que el widget muera al moverse de pestaña
+        if (photo != null) {
+            final shareText = '¡He completado la tarea "${task.title}" en ClanHub! 🚀🛡️';
+            await Share.shareXFiles([photo], text: shareText);
+        }
+
+        // Guardamos en base de datos
         await repo.completeTask(
           taskId: task.id,
           completedByUid: currentUserUid,
         );
+        
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -488,6 +535,8 @@ class TaskCardWidget extends ConsumerWidget {
             ),
           );
         }
+        // --- FIN CAMBIOS CÁMARA ---
+        
       } else {
         // Desmarcar / reabrir
         await repo.reopenTask(task.id);

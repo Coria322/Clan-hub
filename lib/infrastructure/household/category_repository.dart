@@ -74,13 +74,20 @@ class CategoryRepository {
 
   // ── Checks ───────────────────────────────────────────
   Future<bool> _isDuplicate(String householdId, String nameLower, {String? excludeId}) async {
-    final snap = await _col(householdId)
-        .where('nameLower', isEqualTo: nameLower)
-        .get();
-    if (excludeId != null) {
-      return snap.docs.any((d) => d.id != excludeId);
+    try {
+      // Usamos timeout para no bloquear la UI si estamos offline
+      final snap = await _col(householdId)
+          .where('nameLower', isEqualTo: nameLower)
+          .get()
+          .timeout(const Duration(seconds: 2));
+      if (excludeId != null) {
+        return snap.docs.any((d) => d.id != excludeId);
+      }
+      return snap.docs.isNotEmpty;
+    } catch (e) {
+      // Si falla por timeout (offline), asumimos que no es duplicado para permitir crear
+      return false;
     }
-    return snap.docs.isNotEmpty;
   }
 
   // ── Create ───────────────────────────────────────────
@@ -99,7 +106,7 @@ class CategoryRepository {
     if (isDup) throw CategoryException('Ya existe una categoría con ese nombre.');
 
     try {
-      await _col(householdId).add({
+      _col(householdId).add({
         'name': trimmed,
         'nameLower': trimmed.toLowerCase(),
         'colorValue': colorValue,
@@ -107,7 +114,7 @@ class CategoryRepository {
         'isArchived': false,
         'createdBy': createdBy,
         'createdAt': FieldValue.serverTimestamp(),
-      });
+      }).catchError((e) {});
     } catch (e) {
       throw CategoryException('Error al crear la categoría: $e');
     }
@@ -129,12 +136,12 @@ class CategoryRepository {
     if (isDup) throw CategoryException('Ya existe otra categoría con ese nombre.');
 
     try {
-      await _col(householdId).doc(docId).update({
+      _col(householdId).doc(docId).update({
         'name': trimmed,
         'nameLower': trimmed.toLowerCase(),
         'colorValue': colorValue,
         'iconCode': iconCode,
-      });
+      }).catchError((e) {});
     } catch (e) {
       throw CategoryException('Error al actualizar la categoría: $e');
     }
@@ -143,7 +150,7 @@ class CategoryRepository {
   // ── Archive / Restore ────────────────────────────────
   Future<void> archiveCategory(String householdId, String docId) async {
     try {
-      await _col(householdId).doc(docId).update({'isArchived': true});
+      _col(householdId).doc(docId).update({'isArchived': true}).catchError((e) {});
     } catch (e) {
       throw CategoryException('Error al archivar: $e');
     }
@@ -151,7 +158,7 @@ class CategoryRepository {
 
   Future<void> restoreCategory(String householdId, String docId) async {
     try {
-      await _col(householdId).doc(docId).update({'isArchived': false});
+      _col(householdId).doc(docId).update({'isArchived': false}).catchError((e) {});
     } catch (e) {
       throw CategoryException('Error al restaurar: $e');
     }
@@ -160,7 +167,7 @@ class CategoryRepository {
   // ── Delete permanent ─────────────────────────────────
   Future<void> deleteCategory(String householdId, String docId) async {
     try {
-      await _col(householdId).doc(docId).delete();
+      _col(householdId).doc(docId).delete().catchError((e) {});
     } catch (e) {
       throw CategoryException('Error al eliminar: $e');
     }

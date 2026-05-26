@@ -63,6 +63,16 @@ class HouseholdRepository {
     }
   }
 
+  Future<void> updateHouseholdNote(String householdId, String note) async {
+    try {
+      await _firestore.collection('households').doc(householdId).update({
+        'note': note,
+      });
+    } catch (e) {
+      throw HouseholdException('Error al actualizar la nota: $e');
+    }
+  }
+
   Future<String> joinHousehold(String inviteCode, String userUid, String userDisplayName) async {
     try {
       final querySnapshot = await _firestore

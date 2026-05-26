@@ -277,7 +277,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                     as String?;
             final isAdmin = currentUser.uid == adminUid;
             final canEdit = task.isPending && (isCreator || isAdmin);
-            final canDelete = isAdmin || isCreator;
+            final canDelete = isAdmin || (task.isPending && isCreator);
             final canReopen = task.isCompleted && (
                isAdmin || 
                task.completedBy == currentUser.uid

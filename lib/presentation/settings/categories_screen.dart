@@ -364,8 +364,8 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
           ],
         ),
       ),
-      // FAB solo en tab 0 y solo si es admin — sin builders anidados
-      floatingActionButton: (_tabs.index == 0 && _isAdmin)
+      // FAB en tab 0 para todos los miembros (cualquiera puede crear)
+      floatingActionButton: (_tabs.index == 0)
           ? FloatingActionButton.extended(
               onPressed: () => _showCategoryDialog(householdId, currentUserUid),
               icon: const Icon(Icons.add),

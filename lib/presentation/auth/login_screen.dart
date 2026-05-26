@@ -75,6 +75,94 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _showForgotPasswordDialog() async {
+    final emailText = _emailController.text.trim();
+    final controller = TextEditingController(text: emailText);
+    
+    final confirmed = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        final formKey = GlobalKey<FormState>();
+        return AlertDialog(
+          title: const Text('Recuperar contraseña'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.',
+                  style: TextStyle(fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: controller,
+                  decoration: const InputDecoration(
+                    labelText: 'Correo electrónico',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Por favor ingresa tu correo';
+                    }
+                    if (!val.contains('@')) {
+                      return 'Correo inválido';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  Navigator.pop(ctx, controller.text.trim());
+                }
+              },
+              child: const Text('Enviar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == null || confirmed.isEmpty || !mounted) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await ref.read(authRepositoryProvider).sendPasswordReset(confirmed);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('📬 Correo de recuperación enviado con éxito.'),
+            backgroundColor: Color(0xFF4CAF82),
+          ),
+        );
+      }
+    } on AuthException catch (e) {
+      setState(() {
+        _errorMessage = e.message;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Ocurrió un error: $e';
+      });
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -107,15 +195,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               obscureText: _obscurePassword,
             ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: _isLoading ? null : _showForgotPasswordDialog,
+                child: const Text(
+                  '¿Olvidaste tu contraseña?',
+                  style: TextStyle(fontSize: 13),
+                ),
+              ),
+            ),
             if (_errorMessage != null) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               Text(
                 _errorMessage!,
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
                 textAlign: TextAlign.center,
               ),
             ],
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             FilledButton(
               onPressed: _isLoading ? null : _login,
               child: _isLoading 

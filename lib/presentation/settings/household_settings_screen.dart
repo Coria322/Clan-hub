@@ -126,6 +126,27 @@ class _HouseholdSettingsScreenState extends ConsumerState<HouseholdSettingsScree
     }
   }
 
+  Future<void> _showChangePasswordDialog(BuildContext context) async {
+    final success = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => _ChangePasswordDialog(
+        onSave: (newPassword) async {
+          await ref.read(authRepositoryProvider).updatePassword(newPassword);
+        },
+      ),
+    );
+
+    if (success == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('🔑 Contraseña actualizada con éxito.'),
+          backgroundColor: Color(0xFF4CAF82),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final householdId = ref.watch(activeHouseholdProvider);
@@ -229,6 +250,12 @@ class _HouseholdSettingsScreenState extends ConsumerState<HouseholdSettingsScree
                 ),
               const Divider(),
               ListTile(
+                leading: const Icon(Icons.lock_outline, color: Colors.teal),
+                title: const Text('Cambiar Contraseña', style: TextStyle(color: Colors.teal)),
+                onTap: () => _showChangePasswordDialog(context),
+              ),
+              const Divider(),
+              ListTile(
                 leading: const Icon(Icons.logout, color: Colors.red),
                 title: const Text('Cerrar Sesión', style: TextStyle(color: Colors.red)),
                 onTap: () async {
@@ -242,6 +269,131 @@ class _HouseholdSettingsScreenState extends ConsumerState<HouseholdSettingsScree
           );
         },
       ),
+    );
+  }
+}
+
+class _ChangePasswordDialog extends StatefulWidget {
+  final Future<void> Function(String newPassword) onSave;
+
+  const _ChangePasswordDialog({required this.onSave});
+
+  @override
+  State<_ChangePasswordDialog> createState() => _ChangePasswordDialogState();
+}
+
+class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _passwordCtrl = TextEditingController();
+  final _confirmCtrl = TextEditingController();
+  bool _obscureText = true;
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _passwordCtrl.dispose();
+    _confirmCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    
+    setState(() => _saving = true);
+    try {
+      await widget.onSave(_passwordCtrl.text.trim());
+      if (mounted) {
+        Navigator.of(context).pop(true);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _saving = false);
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Error de Seguridad'),
+            content: Text(e.toString()),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Entendido'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Cambiar Contraseña'),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: _passwordCtrl,
+              decoration: InputDecoration(
+                labelText: 'Nueva Contraseña',
+                border: const OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: Icon(_obscureText ? Icons.visibility : Icons.visibility_off),
+                  onPressed: () => setState(() => _obscureText = !_obscureText),
+                ),
+              ),
+              obscureText: _obscureText,
+              enabled: !_saving,
+              validator: (val) {
+                if (val == null || val.trim().isEmpty) {
+                  return 'Ingresa la contraseña';
+                }
+                if (val.trim().length < 6) {
+                  return 'Mínimo 6 caracteres';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _confirmCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Confirmar Contraseña',
+                border: OutlineInputBorder(),
+              ),
+              obscureText: _obscureText,
+              enabled: !_saving,
+              validator: (val) {
+                if (val != _passwordCtrl.text) {
+                  return 'Las contraseñas no coinciden';
+                }
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _saving ? null : () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: _saving ? null : _submit,
+          child: _saving
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text('Cambiar'),
+        ),
+      ],
     );
   }
 }

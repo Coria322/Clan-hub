@@ -165,7 +165,7 @@ class TaskRepository {
         'completedAt': null,
         'weekKey': null,
         'deadlineNotificationSent': false,
-      }).catchError((e) {
+      }).then<void>((_) {}).catchError((e) {
         // Ignoramos el error en consola o lo registramos, 
         // ya que la persistencia se encarga de reintentar.
       });

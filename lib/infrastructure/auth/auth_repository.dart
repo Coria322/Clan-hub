@@ -117,4 +117,32 @@ class AuthRepository {
     await _googleSignIn.signOut();
     await _auth.signOut();
   }
+
+  Future<void> sendPasswordReset(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim());
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        throw AuthException('No existe una cuenta registrada con este correo.');
+      }
+      throw AuthException(e.message ?? 'Error al enviar el correo de recuperación.');
+    } catch (e) {
+      throw AuthException('Error inesperado: $e');
+    }
+  }
+
+  Future<void> updatePassword(String newPassword) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw AuthException('No hay un usuario autenticado.');
+      await user.updatePassword(newPassword.trim());
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        throw AuthException('Por seguridad, esta acción requiere que hayas iniciado sesión recientemente. Por favor, cierra sesión e inicia nuevamente.');
+      }
+      throw AuthException(e.message ?? 'Error al cambiar la contraseña.');
+    } catch (e) {
+      throw AuthException('Error inesperado: $e');
+    }
+  }
 }

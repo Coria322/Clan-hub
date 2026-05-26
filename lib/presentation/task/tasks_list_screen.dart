@@ -518,7 +518,12 @@ class TaskCardWidget extends ConsumerWidget {
         // Si hay foto, compartimos nativamente ANTES de que el widget muera al moverse de pestaña
         if (photo != null) {
             final shareText = '¡He completado la tarea "${task.title}" en ClanHub! 🚀🛡️';
-            await Share.shareXFiles([photo], text: shareText);
+            await SharePlus.instance.share(
+              ShareParams(
+                files: [photo],
+                text: shareText,
+              ),
+            );
         }
 
         // Guardamos en base de datos

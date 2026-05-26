@@ -114,7 +114,7 @@ class CategoryRepository {
         'isArchived': false,
         'createdBy': createdBy,
         'createdAt': FieldValue.serverTimestamp(),
-      }).catchError((e) {});
+      }).then<void>((_) {}).catchError((e) {});
     } catch (e) {
       throw CategoryException('Error al crear la categoría: $e');
     }

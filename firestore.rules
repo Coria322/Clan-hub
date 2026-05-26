@@ -91,7 +91,10 @@ service cloud.firestore {
       allow delete: if isHouseholdMember(resource.data.householdId)
                     && (
                       isHouseholdAdmin(resource.data.householdId) ||
-                      resource.data.createdBy == request.auth.uid
+                      (
+                        resource.data.status == 'pending' &&
+                        resource.data.createdBy == request.auth.uid
+                      )
                     );
     }
   }
